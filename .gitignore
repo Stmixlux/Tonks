@@ -1,5 +1,4 @@
 ## Added ignore for ray-lib
-raylib-master
 _build
 _bin
 .vs
