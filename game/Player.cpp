@@ -2,7 +2,6 @@
 #include "UsefulStuff.h"
 
 using namespace player;
-
 Player::Player(Vector2 PS, Vector2 PP, Vector2 PV)
 {
     PlayerSize = PS;

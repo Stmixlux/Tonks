@@ -3,35 +3,38 @@
 #include "UsefulStuff.h"
 #include "MapGenerator.h"
 
-MapGenerator globalMapGenerator(16, 8);
-
 using namespace player;
 int main ()
 {
 	InitWindow(screenWidth, screenHeight, "Tonks de game");
+    MapGenerator Map(16, 8);
 
 	SetTargetFPS(FPS);
 
-    // Инициализируем игрока
+    // Initialize player
 
     Player p1(StdPlayerSize, Vector2{ (float)(screenWidth / 2), (float)(screenHeight / 2) }, StdPlayerVelocity);
 
-    // Главный игровой цикл
+    // Main game cycle
     while (!WindowShouldClose())
     {
-        // Тут происходит логика движения
+        // Here main movement logic happens
         p1.MovePlayer();
 
-        // Тут происходит отрисовка
+        // Drawing
         BeginDrawing();
 
         ClearBackground(RAYWHITE);
 
-        for (Rectangle r : globalMapGenerator.RealMap) {
+        for (Rectangle r : Map.map) {
             DrawRectangleRec(r, BLACK);
         }
 
         p1.DrawPlayer();
+
+        if (IsKeyDown(KEY_SPACE)) {
+            Map.regenerateMap();
+        }
 
         EndDrawing();
 

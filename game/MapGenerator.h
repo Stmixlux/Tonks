@@ -8,22 +8,22 @@
 #include "UsefulStuff.h"
 
 /// <summary>
-/// Использую метод коллапса волновой функции для генерации карты
+/// Using wave function collapse to generate map
 /// </summary>
 class MapGenerator
 {
-
-	// Тайл чисто для генерации, не путать с тайлами из карты
+	// Hold information about structure of a Tile (not to confuse with Tile from the real Map (if they ever appear))
 	struct Tile {
 		char icon;
 		double weight;
-		// Число показывает чем заканчивается тайл в этой стороне (0 - ничего, 1 - стена)
-		// Стороны идут по часовой стрелке начиная сверху (0 - верх, 1 - право, 2 - низ, 3 - лево)
+
+		// Number shows what is on the end of this side of Tile (0 - void, 1 - wall)
+		// Sides go in clock-order from 0 to 3 (0 - up, 1 - right, 2 - down, 3 - left)
 		int sidesStates[4];
 
 		Tile(char i, double weight, int up, int right, int down, int left);
 
-		// поворот себя n раз по 90
+		// Return copy of itself rotated by 90deg. n times
 		Tile rotateSelf(int n) const;
 
 		bool operator==(const Tile& other) const;
@@ -32,51 +32,53 @@ class MapGenerator
 
 	};
 
-	// Клетка на карте, которая может быть сгенерирована
+	// Cell on map, representing current state of the map-tile. Should only be used during map generation
 	struct Cell {
 		bool isCollapsed;
 		int finalTileIndex;
 		std::set<int> options;
 		int posx, posy;
+		MapGenerator* generator;
 
-		// Не рекомендуется к использованию (?)
+		// DO NOT, UNDER ANY CIRCUMSTANCES, USE IT (breaks the state) (?)
 		Cell(); 
-		Cell(int x, int y);
+		Cell(int x, int y, MapGenerator* gen);
 
-		int pickRandom();
+		int pickRandom() const;
 		void Collapse();
-		void Update(int side, Cell& neighbour);
-		void CutSide(int side);
+		void Update(int side,const Cell& neighbour);
 
 		void print() const;
 	};
 
-	// Набор функций нужный для полировки генерации при удалении некоторых стен
-	int make_node(int i, int j, int index);
+	// Used to polish generation by deleting some extra walls
+	int makeNode(int i, int j, int index);
+	// Used snake case, to differentiate i and j
 	int get_i(int node);
 	int get_j(int node);
 	int get_index(int node);
 	void dfs(int v, std::map<int, std::set<int>>& graph, std::set<int>& component, std::vector<bool>& used);
 
+	// Map size
+	int n, m;
+	std::vector<std::vector<Cell>> cellMap;
+
+	// Reference Table for indexTile <-> Tile
+	std::vector<Tile> Tileset;
+
+	void loadTiles();
+	void clearMap();
+	void generateMap();
+	void pruneExtraWalls();
 
 public:
-	// Карта
-	int n, m; // Размеры
-	std::vector<std::vector<Cell>> map;
 
-	// Таблица сверки индекс - тайл
-	std::vector<Tile> Tiles;
-
-	// Итоговая карта - набор прямоугольников
-	std::vector<Rectangle> RealMap;
-
-
+	// Real gameMap (for now just rectangles)
+	std::vector<Rectangle> map;
 	MapGenerator(int a, int b);
-	void loadTiles();
-	void GenerateMap();
 
-	//Заставите делать что угодно, специально для дебага
-	void degug();
+	void regenerateMap();
+
+	//Here it comes, the one, the only - degug
+	void degug() const;
 };
-
-extern MapGenerator globalMapGenerator;
