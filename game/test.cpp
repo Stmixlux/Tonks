@@ -2,6 +2,7 @@
 #include "UsefulStuff.h"
 
 
+
 using namespace player;
 int main()
 {
@@ -13,8 +14,15 @@ int main()
 
     // Инициализируем игрока
 
-    Player p1 (Vector2{ 30, 60 }, Vector2{ (float)(screenWidth / 2), (float)(screenHeight / 2) }, Vector2{ 0.0f, -4.0f });
+    Player p1 (StdPlayerSize, Vector2{ (float)(screenWidth / 2), (float)(screenHeight / 2) }, StdPlayerVelocity);
 
+    // Препятствия для теста коллизий
+    Rectangle obst1 = { 200, 300, 100, 300 };
+    Rectangle obst2 = { 800, 100, 50, 150 };
+    Rectangle obst3 = { 600, 500, 90, 210 };
+    Rectangle obst4 = { 10, 0, 90, 210 };
+
+    std::vector<Rectangle> obstacles = { obst1, obst2, obst3, obst4};
 
     // Главный игровой цикл
     while (!WindowShouldClose())
@@ -29,10 +37,14 @@ int main()
 
         ClearBackground(RAYWHITE);
 
-        DrawText("move the tank with arrow keys", 10, 10, 20, DARKGRAY);
+
         DrawLine(0, screenHeight / 2, screenWidth, screenHeight / 2, BLACK);
         DrawLine(screenWidth / 2, 0, screenWidth / 2, screenHeight, BLACK);
 
+        for (Rectangle obst : obstacles) {
+            DrawRectangleRec(obst, GRAY);
+        }
+        
 
         p1.DrawPlayer();
 
