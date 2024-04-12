@@ -267,6 +267,9 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MapGenerator.cpp" />
+    <ClCompile Include="Player.cpp" />
+    <ClCompile Include="test.cpp" />
+    <ClCompile Include="UsefulStuff.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\raylib-master\raylib.vcxproj">
@@ -275,6 +278,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MapGenerator.h" />
+    <ClInclude Include="Player.h" />
+    <ClInclude Include="UsefulStuff.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,5 +1,6 @@
 ﻿#include "MapGenerator.h"
 
+
 // Функции для работы с нодами
 int MapGenerator::make_node(int i, int j, int index)
 {

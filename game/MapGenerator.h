@@ -5,11 +5,7 @@
 #include <iostream>
 #include <ctime>
 #include <raylib.h>
-
-//некоторые константы (!!! ”Ѕ≈–» ѕќ—Ћ≈ —Ћ»яЌ»я !!!)
-const int screenWidth = 1280;
-const int screenHeight = 640;
-
+#include "UsefulStuff.h"
 
 /// <summary>
 /// »спользую метод коллапса волновой функции дл€ генерации карты
