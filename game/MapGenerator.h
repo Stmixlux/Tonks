@@ -6,6 +6,7 @@
 #include <ctime>
 #include <raylib.h>
 #include "UsefulStuff.h"
+#include "Tile.h"
 
 /// <summary>
 /// Using wave function collapse to generate map
@@ -13,7 +14,7 @@
 class MapGenerator
 {
 	// Hold information about structure of a Tile (not to confuse with Tile from the real Map (if they ever appear))
-	struct Tile {
+	struct GenerationTile {
 		char icon;
 		double weight;
 
@@ -21,13 +22,13 @@ class MapGenerator
 		// Sides go in clock-order from 0 to 3 (0 - up, 1 - right, 2 - down, 3 - left)
 		int sidesStates[4];
 
-		Tile(char i, double weight, int up, int right, int down, int left);
+		GenerationTile(char i, double weight, int up, int right, int down, int left);
 
 		// Return copy of itself rotated by 90deg. n times
-		Tile rotateSelf(int n) const;
+		GenerationTile rotateSelf(int n) const;
 
-		bool operator==(const Tile& other) const;
-		bool operator!=(const Tile& other) const;
+		bool operator==(const GenerationTile& other) const;
+		bool operator!=(const GenerationTile& other) const;
 		void print() const;
 
 	};
@@ -64,7 +65,7 @@ class MapGenerator
 	std::vector<std::vector<Cell>> cellMap;
 
 	// Reference Table for indexTile <-> Tile
-	std::vector<Tile> Tileset;
+	std::vector<GenerationTile> Tileset;
 
 	void loadTiles();
 	void clearMap();
@@ -74,10 +75,15 @@ class MapGenerator
 public:
 
 	// Real gameMap (for now just rectangles)
-	std::vector<Rectangle> map;
+	std::vector<std::vector<Tile>> map;
 	MapGenerator(int a, int b);
 
 	void regenerateMap();
+
+	// Useful methods
+	void Draw();
+	Tile getTileAt(Vector2 position);
+	std::vector<Rectangle> getNeighbourhoodRect(Vector2 position);
 
 	//Here it comes, the one, the only - degug
 	void degug() const;

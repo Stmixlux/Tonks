@@ -16,7 +16,7 @@ using namespace player;
 int main ()
 {
 	InitWindow(screenWidth, screenHeight, "Tonks de game");
-    MapGenerator Map(16, 8);
+    MapGenerator Map(XCellCount, YCellCount);
 
 	SetTargetFPS(FPS);
 
@@ -30,9 +30,10 @@ int main ()
     {
         // Here happens moving logic
         for (int i = 0; i < UltimateBulletVector.size(); i++) {
-            for (Rectangle rect : globalMapGenerator.RealMap) {
+            /*
+            for (Rectangle rect : Map.map) {
                 UltimateBulletVector[i].Collide(rect);
-            }
+            }*/
         }
 
 
@@ -54,13 +55,14 @@ int main ()
 
         ClearBackground(RAYWHITE);
 
-        for (Rectangle r : Map.map) {
+        // Map.Draw();
+        for (Rectangle r : Map.getNeighbourhoodRect(p1.PlayerPosition)) {
             DrawRectangleRec(r, BLACK);
         }
 
         p1.DrawPlayer();
 
-        if (IsKeyDown(KEY_SPACE)) {
+        if (IsKeyDown(KEY_R)) {
             Map.regenerateMap();
         }
 

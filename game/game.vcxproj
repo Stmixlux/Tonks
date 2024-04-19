@@ -270,6 +270,7 @@
     <ClCompile Include="MapGenerator.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="test.cpp" />
+    <ClCompile Include="Tile.cpp" />
     <ClCompile Include="UsefulStuff.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -281,6 +282,7 @@
     <ClInclude Include="Bullet.h" />
     <ClInclude Include="MapGenerator.h" />
     <ClInclude Include="Player.h" />
+    <ClInclude Include="Tile.h" />
     <ClInclude Include="UsefulStuff.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

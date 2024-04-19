@@ -6,6 +6,9 @@
 
 #define DARKRED        CLITERAL(Color){ 153, 27, 37, 255 }     // Dark Red
 
+//Map parametrs
+const int XCellCount = 16;
+const int YCellCount = 8;
 const int screenWidth = 1280;
 const int screenHeight = 720;
 

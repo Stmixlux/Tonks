@@ -20,32 +20,67 @@ void MapGenerator::regenerateMap()
 	generateMap();
 }
 
+void MapGenerator::Draw()
+{
+	for (int i = 0; i < n; i++) {
+		for (int j = 0; j < m; j++) {
+			map[i][j].Draw();
+		}
+	}
+}
+
+Tile MapGenerator::getTileAt(Vector2 position)
+{
+	int x = (int)(position.x / screenWidth * n);
+	int y = (int)(position.y / screenHeight * m);
+	return map[x][y];
+}
+
+std::vector<Rectangle> MapGenerator::getNeighbourhoodRect(Vector2 position)
+{
+	std::vector<Rectangle> res{ Rectangle{-10, -1, 15, screenHeight + 2}, Rectangle{screenWidth - 5, -1, 10.1, screenHeight + 2}, Rectangle{-1, -10, screenWidth + 2, 15}, Rectangle{-1, screenHeight-5, screenWidth + 2, 10.1} };
+	int x = (int)(position.x / screenWidth * n);
+	int y = (int)(position.y / screenHeight * m);
+	map[x][y].getRectangles(res);
+
+	if (0 <= x - 1)	map[x - 1][y].getRectangles(res);
+	if (x + 1 < n)	map[x + 1][y].getRectangles(res);
+	if (0 <= y - 1)	map[x][y - 1].getRectangles(res);
+	if (y + 1 < m)	map[x][y + 1].getRectangles(res);
+	if (0 <= x - 1 && 0 <= y - 1)	map[x - 1][y - 1].getRectangles(res);
+	if (0 <= x - 1 && y + 1 < m)	map[x - 1][y + 1].getRectangles(res);
+	if (x + 1 < n && y + 1 < m)		map[x + 1][y + 1].getRectangles(res);
+	if (x + 1 < n && 0 <= y - 1)	map[x + 1][y - 1].getRectangles(res);
+
+	return res;
+}
+
 void MapGenerator::loadTiles()
 {
 	// Temporary solution, supposed to load textures down the road (There's nothing more eternal than temporary solution)
 	// Load base Tiles (configuration of 0/1 sides and their's generation probobalities (weights))
-	Tileset.push_back(Tile('f', 30, 0, 0, 0, 0));
-	Tileset.push_back(Tile('a', 10, 1, 0, 0, 0));
-	Tileset.push_back(Tile('b', 30, 1, 0, 1, 0));
-	Tileset.push_back(Tile('c', 4, 0, 1, 1, 1));
-	Tileset.push_back(Tile('d', 10, 1, 1, 0, 0));
-	Tileset.push_back(Tile('e', 1, 1, 1, 1, 1));
+	Tileset.push_back(GenerationTile('f', 30, 0, 0, 0, 0));
+	Tileset.push_back(GenerationTile('a', 10, 1, 0, 0, 0));
+	Tileset.push_back(GenerationTile('b', 30, 1, 0, 1, 0));
+	Tileset.push_back(GenerationTile('c', 4, 0, 1, 1, 1));
+	Tileset.push_back(GenerationTile('d', 10, 1, 1, 0, 0));
+	Tileset.push_back(GenerationTile('e', 1, 1, 1, 1, 1));
 
 	// Rotate base Tiles to get all possible configurations
 	int base_tiles_count = Tileset.size();
 	for (int i = 0; i < base_tiles_count; i++) {
-		Tile _u = Tileset[i];
-		Tile _r = Tileset[i].rotateSelf(1);
-		Tile _d = Tileset[i].rotateSelf(2);
-		Tile _l = Tileset[i].rotateSelf(3);
+		GenerationTile _u = Tileset[i];
+		GenerationTile _r = Tileset[i].rotateSelf(1);
+		GenerationTile _d = Tileset[i].rotateSelf(2);
+		GenerationTile _l = Tileset[i].rotateSelf(3);
 		if (_r != _u) {
-			Tileset.push_back(Tile(_r));
+			Tileset.push_back(GenerationTile(_r));
 		}
 		if (_d != _u && _d != _r) {
-			Tileset.push_back(Tile(_d));
+			Tileset.push_back(GenerationTile(_d));
 		}
 		if (_l != _u && _l != _r && _l != _d) {
-			Tileset.push_back(Tile(_l));
+			Tileset.push_back(GenerationTile(_l));
 		}
 	}
 
@@ -54,7 +89,13 @@ void MapGenerator::loadTiles()
 
 void MapGenerator::clearMap()
 {
-	map.clear();
+	map.resize(n, std::vector<Tile>(m)); // This helps not to break this attrocity of vector<vector<>>
+	for (int i = 0; i < n; i++) {
+		for (int j = 0; j < m; j++) {
+			map[i][j] = Tile(i, j, Tileset[0].sidesStates);
+		}
+	}
+
 	cellMap.resize(n, std::vector<Cell>(m)); // This helps not to break this attrocity of vector<vector<>>
 	for (int i = 0; i < n; i++) {
 		for (int j = 0; j < m; j++) {
@@ -113,26 +154,10 @@ void MapGenerator::generateMap()
 
 	pruneExtraWalls();
 
-	// Transform cells into rectangles (To draw them down the line)
-	float cellWidth = screenWidth / n;
-	float cellHeight = screenHeight / m;
-	float lineWidth = (screenHeight / n + screenWidth / m) / 20;
-
+	// Transform cells into Tiles (The ones from the real map)
 	for (int i = 0; i < n; i++) {
 		for (int j = 0; j < m; j++) {
-			Tile cell = Tileset[cellMap[i][j].finalTileIndex]; // Deep...
-			if (cell.sidesStates[0]) {
-				map.push_back(Rectangle{ float(i + 0.5) * cellWidth - lineWidth / 2, float(j) * cellHeight, lineWidth, cellHeight / 2 + lineWidth / 2 });
-			}
-			if (cell.sidesStates[1]) {
-				map.push_back(Rectangle{ float(i + 0.5) * cellWidth, float(j + 0.5) * cellHeight - lineWidth / 2, cellWidth / 2 + lineWidth / 2, lineWidth });
-			}
-			if (cell.sidesStates[2]) {
-				map.push_back(Rectangle{ float(i + 0.5) * cellWidth - lineWidth / 2, float(j + 0.5) * cellHeight - lineWidth / 2, lineWidth, cellHeight / 2 + lineWidth / 2 });
-			}
-			if (cell.sidesStates[3]) {
-				map.push_back(Rectangle{ float(i) * cellWidth, float(j + 0.5) * cellHeight - lineWidth / 2, cellWidth / 2, lineWidth });
-			}
+			map[i][j].Update(i, j, Tileset[cellMap[i][j].finalTileIndex].sidesStates);
 		}
 	}
 }
@@ -154,7 +179,7 @@ void MapGenerator::pruneExtraWalls()
 	std::vector<int> wallsToBreak;
 	for (int i = 0; i < n; i++) {
 		for (int j = 0; j < m; j++) {
-			Tile cell = Tileset[cellMap[i][j].finalTileIndex];
+			GenerationTile cell = Tileset[cellMap[i][j].finalTileIndex];
 			for (int index = 0; index < 4; index++) {
 				// Added node's neigbours from inside the cell
 				if (cell.sidesStates[index] == 0) graph[makeNode(i, j, index)].insert(makeNode(i, j, (index + 1) % 4));
@@ -229,7 +254,7 @@ void MapGenerator::degug() const
 
 
 ///// Tile workshop
-MapGenerator::Tile::Tile(char i, double w, int up, int right, int down, int left)
+MapGenerator::GenerationTile::GenerationTile(char i, double w, int up, int right, int down, int left)
 {
 	icon = i;
 	weight = w;
@@ -239,13 +264,13 @@ MapGenerator::Tile::Tile(char i, double w, int up, int right, int down, int left
 	sidesStates[3] = left;
 }
 
-MapGenerator::Tile MapGenerator::Tile::rotateSelf(int n) const
+MapGenerator::GenerationTile MapGenerator::GenerationTile::rotateSelf(int n) const
 {
 	n = n % 4;
-	return MapGenerator::Tile(icon, weight, sidesStates[(4-n) % 4], sidesStates[(5 - n) % 4], sidesStates[(6 - n) % 4], sidesStates[(7 - n) % 4]);
+	return MapGenerator::GenerationTile(icon, weight, sidesStates[(4-n) % 4], sidesStates[(5 - n) % 4], sidesStates[(6 - n) % 4], sidesStates[(7 - n) % 4]);
 }
 
-bool MapGenerator::Tile::operator==(const Tile& other) const
+bool MapGenerator::GenerationTile::operator==(const GenerationTile& other) const
 {
 	for (int i = 0; i < 4; i++) {
 		if (sidesStates[i] != other.sidesStates[i]) {
@@ -255,12 +280,12 @@ bool MapGenerator::Tile::operator==(const Tile& other) const
 	return true;
 }
 
-bool MapGenerator::Tile::operator!=(const Tile& other) const
+bool MapGenerator::GenerationTile::operator!=(const GenerationTile& other) const
 {
 	return !(*this == other);
 }
 
-void MapGenerator::Tile::print() const
+void MapGenerator::GenerationTile::print() const
 {
 	for (int s : sidesStates) {
 		std::cout << s << " ";
