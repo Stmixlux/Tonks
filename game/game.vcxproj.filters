@@ -21,10 +21,12 @@
     <ClCompile Include="UsefulStuff.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Bullet.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MapGenerator.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="UsefulStuff.h" />
+    <ClInclude Include="Bullet.h" />
   </ItemGroup>
 </Project>

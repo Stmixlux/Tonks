@@ -71,3 +71,28 @@ void Player::Collide(Rectangle rect) {
     }
     
 }
+
+void Player::Shoot()
+{
+    const int StdReloadTime = 30;
+    if (AvailableShots == 5) {
+        ReloadTime = StdReloadTime;
+    }
+    else {
+        ReloadTime -= 1;
+        if (ReloadTime == 0) {
+            AvailableShots += 1;
+            ReloadTime = StdReloadTime;
+        }
+    }
+
+    if (InBetweenReloadTimer != 0) {
+        InBetweenReloadTimer -= 1;
+    }
+    if (InBetweenReloadTimer == 0 && AvailableShots != 0 && IsKeyPressed(KEY_SPACE)) {
+        UltimateBulletVector.push_back(Bullet{ PlayerPosition + PlayerVelocity * 10, PlayerVelocity * 2, StdBulletRadius });
+        InBetweenReloadTimer = 4;
+        AvailableShots -= 1;
+        ReloadTime = StdReloadTime;
+    }
+}

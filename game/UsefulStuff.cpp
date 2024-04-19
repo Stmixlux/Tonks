@@ -23,6 +23,16 @@ Vector2 operator*(const Vector2& v, float ratio) {
 	return Vector2{ v.x * ratio, v.y * ratio };
 }
 
+double VectorProd(const Vector2& v1, const Vector2& v2)
+{
+	return v1.x * v2.y - v2.x * v1.y;
+}
+
+double GetDistance(const Vector2& v1, const Vector2& v2)
+{
+	return pow(pow(v1.x - v2.x, 2) + pow(v1.y - v2.y, 2), 0.5);
+}
+
 
 void RotateVector2(Vector2& cent, Vector2& v, double angle) {
 	double old_x = v.x;

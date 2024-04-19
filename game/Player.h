@@ -1,5 +1,6 @@
 #pragma once
 #include "raylib.h"
+#include "Bullet.h"
 #include <vector>
 
 namespace player {
@@ -15,10 +16,15 @@ namespace player {
 		int RotationDirection = 1;
 		int MovingDirection = 1;
 
+		int InBetweenReloadTimer = 0;
+		int AvailableShots = 5;
+		int ReloadTime = 0;
+
 		Player(Vector2 PS, Vector2 PP, Vector2 PV);
 		void MovePlayer();
 		void DrawPlayer();
 		void UpdatePoints();
 		void Collide(Rectangle);
+		void Shoot();
 	};
 }

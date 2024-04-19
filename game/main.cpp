@@ -3,6 +3,15 @@
 #include "UsefulStuff.h"
 #include "MapGenerator.h"
 
+std::deque<Bullet> UltimateBulletVector;
+
+
+/* TODO:
+    Fix bullet death    (get rid of memory leaks)
+    Implement collision for tank (hard :( )
+
+*/
+
 using namespace player;
 int main ()
 {
@@ -11,17 +20,36 @@ int main ()
 
 	SetTargetFPS(FPS);
 
-    // Initialize player
+    // Player initialization
 
     Player p1(StdPlayerSize, Vector2{ (float)(screenWidth / 2), (float)(screenHeight / 2) }, StdPlayerVelocity);
+
 
     // Main game cycle
     while (!WindowShouldClose())
     {
-        // Here main movement logic happens
+        // Here happens moving logic
+        for (int i = 0; i < UltimateBulletVector.size(); i++) {
+            for (Rectangle rect : globalMapGenerator.RealMap) {
+                UltimateBulletVector[i].Collide(rect);
+            }
+        }
+
+
         p1.MovePlayer();
 
-        // Drawing
+
+        for (int i = 0; i < UltimateBulletVector.size(); i++) {
+            UltimateBulletVector[i].MoveBullet();
+        }
+        
+
+
+        // Here happens shooting
+
+        p1.Shoot();
+
+        // Here happens drawing
         BeginDrawing();
 
         ClearBackground(RAYWHITE);
@@ -35,6 +63,13 @@ int main ()
         if (IsKeyDown(KEY_SPACE)) {
             Map.regenerateMap();
         }
+
+
+        for (int i = 0; i < UltimateBulletVector.size(); i++) {
+            UltimateBulletVector[i].DrawBullet();
+        }
+
+
 
         EndDrawing();
 
