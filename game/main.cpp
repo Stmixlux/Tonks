@@ -55,10 +55,7 @@ int main ()
 
         ClearBackground(RAYWHITE);
 
-        // Map.Draw();
-        for (Rectangle r : Map.getNeighbourhoodRect(p1.PlayerPosition)) {
-            DrawRectangleRec(r, BLACK);
-        }
+        Map.Draw();
 
         p1.DrawPlayer();
 

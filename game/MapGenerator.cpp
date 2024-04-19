@@ -38,7 +38,8 @@ Tile MapGenerator::getTileAt(Vector2 position)
 
 std::vector<Rectangle> MapGenerator::getNeighbourhoodRect(Vector2 position)
 {
-	std::vector<Rectangle> res{ Rectangle{-10, -1, 15, screenHeight + 2}, Rectangle{screenWidth - 5, -1, 10.1, screenHeight + 2}, Rectangle{-1, -10, screenWidth + 2, 15}, Rectangle{-1, screenHeight-5, screenWidth + 2, 10.1} };
+	std::vector<Rectangle> res{ Rectangle{-10, -1, 15, screenHeight + 2}, Rectangle{screenWidth - 5, -1, 10.1, screenHeight + 2},
+		Rectangle{-1, -10, screenWidth + 2, 15}, Rectangle{-1, screenHeight-5, screenWidth + 2, 10.1} }; // Боковые стены
 	int x = (int)(position.x / screenWidth * n);
 	int y = (int)(position.y / screenHeight * m);
 	map[x][y].getRectangles(res);
