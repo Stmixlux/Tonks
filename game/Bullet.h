@@ -8,7 +8,6 @@
 
 class Bullet
 {
-	Sound burstSound;
 public:
 	Vector2 Position;
 	Vector2 Velocity;
@@ -17,10 +16,7 @@ public:
 	//bool IsAlive = true;
 
 
-	Bullet(Vector2 P, Vector2 V, int r) : Position(P), Velocity(V), Radius(r) 
-	{ 
-		burstSound = LoadSound("resources/burst.mp3");
-	};
+	Bullet(Vector2 P, Vector2 V, int r) : Position(P), Velocity(V), Radius(r) {};
 	//~Bullet();
 	void MoveBullet();
 	void DrawBullet();
@@ -29,3 +25,4 @@ public:
 };
 
 extern std::deque<Bullet> UltimateBulletVector;
+extern Sound soundBoard[100];

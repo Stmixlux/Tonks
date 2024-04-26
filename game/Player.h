@@ -6,7 +6,6 @@
 namespace player {
 	class Player
 	{
-		Sound shotSound;
 	public:
 		Vector2 PlayerSize;
 		Vector2 PlayerPosition;
@@ -33,3 +32,5 @@ namespace player {
 		void Shoot();
 	};
 }
+
+extern Sound soundBoard[100];

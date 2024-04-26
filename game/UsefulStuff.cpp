@@ -61,3 +61,9 @@ bool DumbCheck(const Rectangle& rect, const Vector2& v)
 	return (abs(rect.x - v.x) + abs(rect.x + rect.width - v.x) <= rect.width &&
 		abs(rect.y - v.y) + abs(rect.y + rect.height - v.y) <= rect.height);;
 }
+
+void loadAllSounds()
+{
+	soundBoard[SoundBulletBurst] = LoadSound("resources/burst.mp3");
+	soundBoard[SoundPlayerShoot] = LoadSound("resources/shot.mp3");
+}

@@ -2,6 +2,8 @@
 #include "raylib.h"
 #include <deque>
 #include <vector>
+#include <map>
+#include <string>
 
 // This is file with useful functions/constants that are widely used
 
@@ -10,8 +12,11 @@
 //Map parametrs
 const int XCellCount = 16;
 const int YCellCount = 8;
+
 const int screenWidth = 1280;
 const int screenHeight = 720;
+const int cellWidth = screenWidth / XCellCount;
+const int cellHeight = screenHeight / YCellCount;
 const std::vector<Rectangle> outerWalls{ Rectangle{-10, -1, 15, screenHeight + 2}, Rectangle{screenWidth - 5 - screenWidth / XCellCount, -1, 15, screenHeight + 2},
 		Rectangle{-1, -10, screenWidth + 2, 15}, Rectangle{-1, screenHeight - 5 - screenHeight / YCellCount, screenWidth + 2, 15} };
 
@@ -41,4 +46,10 @@ Vector2 GetRotatedVector(Vector2& cent, Vector2& v, double angle);
 
 // Auxiliary functions for collisions
 bool DumbCheck(const Rectangle& rect, const Vector2& v);
+
+
+// Global resource Managment
+enum SoundsId {SoundPlayerShoot, SoundBulletBurst};
+extern Sound soundBoard[100];
+void loadAllSounds();
 

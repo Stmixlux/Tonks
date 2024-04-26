@@ -6,6 +6,7 @@
 #include "Switch.h"
 
 std::deque<Bullet> UltimateBulletVector;
+Sound soundBoard[100];
 
 typedef enum GameScreen { StartMenu = 0, Game, Settings, Exit };
 
@@ -19,6 +20,7 @@ using namespace player;
 
 int main ()
 {
+
 	InitWindow(screenWidth - screenWidth / XCellCount, screenHeight - screenHeight/YCellCount, "Tonks de game");
     MapGenerator Map(XCellCount, YCellCount);
 
@@ -29,15 +31,16 @@ int main ()
     music.looping = true;
 
     PlayMusicStream(music);
-    SetMusicVolume(music, 0.7);
+    SetMusicVolume(music, 0.1);
 
     GameScreen CurrentScreen = StartMenu;
+    loadAllSounds();
 
     // Player initialization
 
     Vector2 RealCenter{ (screenWidth - screenWidth / XCellCount) / 2, (screenHeight - screenHeight / YCellCount) / 2 };
 
-    Player p1(StdPlayerSize, RealCenter, StdPlayerVelocity);
+    Player p1(StdPlayerSize, RealCenter + Vector2{(int)0.3*cellWidth, (int)0.3*cellHeight}, StdPlayerVelocity);
 
 
     // Buttons
@@ -47,7 +50,7 @@ int main ()
     Button BackButton{ RealCenter + Vector2{0, 150},  Vector2{100, 60}, "Back", 30, GRAY };
     Switch CameraModeButton{ RealCenter + Vector2{-100, 0},  Vector2{100, 60}, "Fog of war mode", 40};
 
-    //
+    // Some flags
     bool ExitFlag = false;
     int CameraMode = 0;
 
@@ -101,8 +104,7 @@ int main ()
             break;
 
         // Actual game window
-        case Game:
-        
+        case Game:        
             // Player moving
             p1.MovePlayer();
 

@@ -15,7 +15,7 @@ void Bullet::MoveBullet()
 	LivingTime -= 1;
 	if (LivingTime == 0) {
 		//IsAlive = false;
-		PlaySound(burstSound);
+		PlaySound(soundBoard[SoundBulletBurst]);
 		UltimateBulletVector.pop_front();
 	}
 }
