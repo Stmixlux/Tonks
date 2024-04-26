@@ -21,10 +21,16 @@
     <ClCompile Include="UsefulStuff.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Bullet.cpp" />
     <ClCompile Include="Tile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Bullet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Button.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Switch.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MapGenerator.h" />
@@ -32,5 +38,7 @@
     <ClInclude Include="UsefulStuff.h" />
     <ClInclude Include="Bullet.h" />
     <ClInclude Include="Tile.h" />
+    <ClInclude Include="Button.h" />
+    <ClInclude Include="Switch.h" />
   </ItemGroup>
 </Project>

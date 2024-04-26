@@ -2,9 +2,12 @@
 #include "Player.h"
 #include "UsefulStuff.h"
 #include "MapGenerator.h"
+#include "Button.h"
+#include "Switch.h"
 
 std::deque<Bullet> UltimateBulletVector;
 
+typedef enum GameScreen { StartMenu = 0, Game, Settings, Exit };
 
 /* TODO:
     Fix bullet death    (get rid of memory leaks)
@@ -13,64 +16,151 @@ std::deque<Bullet> UltimateBulletVector;
 */
 
 using namespace player;
+
 int main ()
 {
-	InitWindow(screenWidth, screenHeight, "Tonks de game");
+	InitWindow(screenWidth - screenWidth / XCellCount, screenHeight - screenHeight/YCellCount, "Tonks de game");
     MapGenerator Map(XCellCount, YCellCount);
 
 	SetTargetFPS(FPS);
 
+    GameScreen CurrentScreen = StartMenu;
+
     // Player initialization
 
-    Player p1(StdPlayerSize, Vector2{ (float)(screenWidth / 2), (float)(screenHeight / 2) }, StdPlayerVelocity);
+    Vector2 RealCenter{ (screenWidth - screenWidth / XCellCount) / 2, (screenHeight - screenHeight / YCellCount) / 2 };
 
+    Player p1(StdPlayerSize, RealCenter, StdPlayerVelocity);
+
+
+    // Buttons
+    Button PlayButton{ RealCenter - Vector2{0, 50}, Vector2{150, 80}, "Play" , 30, GRAY };
+    Button SettingsButton{ RealCenter + Vector2{0, 50}, Vector2{150, 80}, "Settings", 30, GRAY };
+    Button ExitButton{ RealCenter + Vector2{0, 150},  Vector2{100, 60}, "Exit", 30, GRAY };
+    Button BackButton{ RealCenter + Vector2{0, 150},  Vector2{100, 60}, "Back", 30, GRAY };
+    Switch CameraModeButton{ RealCenter + Vector2{-100, 0},  Vector2{100, 60}, "Fog of war mode", 40};
+
+    //
+    bool ExitFlag = false;
+    int CameraMode = 0;
 
     // Main game cycle
-    while (!WindowShouldClose())
+    while (!(ExitFlag || (WindowShouldClose() && !IsKeyDown(KEY_ESCAPE))))
     {
-        // Here happens moving logic
-        for (int i = 0; i < UltimateBulletVector.size(); i++) {
-            /*
-            for (Rectangle rect : Map.map) {
-                UltimateBulletVector[i].Collide(rect);
-            }*/
-        }
+        switch (CurrentScreen) {
 
+        // Start window
+        case StartMenu:
 
-        p1.MovePlayer();
+            if (PlayButton.IsPressed()) {
+                CurrentScreen = Game;
+            }
+            
+            else if (ExitButton.IsPressed()) {
+                CurrentScreen = Exit;
+            }
 
+            else if (SettingsButton.IsPressed()) {
+                CurrentScreen = Settings;
+            }
 
-        for (int i = 0; i < UltimateBulletVector.size(); i++) {
-            UltimateBulletVector[i].MoveBullet();
-        }
+            BeginDrawing();
+            ClearBackground(RAYWHITE);
+            DrawText("Tonks the Game", RealCenter.x - MeasureText("Tonks the Game", 50) / 2, RealCenter.y - 50 / 2 - 200, 50, BLACK);
+            PlayButton.DrawButton();
+            ExitButton.DrawButton();
+            SettingsButton.DrawButton();
+
+            // Calibrating pink circle in the center
+            //DrawCircle((screenWidth - screenWidth / XCellCount) / 2, (screenHeight - screenHeight / YCellCount) / 2, 4, PINK);
+
+            EndDrawing();
+            break;
         
+        case Settings:
+
+            if (BackButton.IsPressed()) {
+                CurrentScreen = StartMenu;
+            }
+            CameraModeButton.UpdateSwitch();
+            CameraMode = CameraModeButton.GetState();
+
+            BeginDrawing();
+            ClearBackground(RAYWHITE);
+            DrawText("Placeholder page for settings", RealCenter.x - MeasureText("Placeholder page for settings", 30) / 2, RealCenter.y - 30 / 2 - 200, 30, BLACK);
+            CameraModeButton.DrawSwitch();
+            BackButton.DrawButton();
+            EndDrawing();
+            break;
+
+        // Actual game window
+        case Game:
+        
+            // Player moving
+            p1.MovePlayer();
+
+            // Collision with walls for player
+            for (Rectangle wall : Map.getNeighbourhoodRect(p1.PlayerPosition)) {
+                p1.CollideWall(wall);
+            }
 
 
-        // Here happens shooting
+            // Collsion with walls for bullets
+            for (int i = 0; i < UltimateBulletVector.size(); i++) {
+                for (Rectangle rect : Map.getNeighbourhoodRect(UltimateBulletVector[i].Position)) {
+                    UltimateBulletVector[i].Collide(rect);
+                }
+            }
 
-        p1.Shoot();
+            // Moving for bullets
+            for (int i = 0; i < UltimateBulletVector.size(); i++) {
+                UltimateBulletVector[i].MoveBullet();
+            }
 
-        // Here happens drawing
-        BeginDrawing();
+            // Shooting
+            p1.Shoot();
+            
 
-        ClearBackground(RAYWHITE);
+            // Here begins drawing
+            BeginDrawing();
+            ClearBackground(RAYWHITE);
 
-        Map.Draw();
+            // Map drawing Standard mode
+            
+            if (CameraMode == 0) {
+                Map.Draw();
+            }
+            else if (CameraMode == 1) {
+                for (Rectangle r : Map.getNeighbourhoodRect(p1.PlayerPosition)) {
+                    DrawRectangleRec(r, BLACK);
+                }
+            }
+            
+            p1.DrawPlayer();
 
-        p1.DrawPlayer();
+            // Calibrating pink circle in the center
+            DrawCircle((screenWidth - screenWidth / XCellCount) / 2, (screenHeight - screenHeight / YCellCount) / 2, 4, PINK);
 
-        if (IsKeyDown(KEY_R)) {
-            Map.regenerateMap();
+            // Map regenerator
+            if (IsKeyDown(KEY_G)) {
+                Map.regenerateMap();
+            }
+
+            // Bullet drawer
+            for (int i = 0; i < UltimateBulletVector.size(); i++) {
+                UltimateBulletVector[i].DrawBullet();
+            }
+            EndDrawing();
+            break;
+
+        // Case for exit
+        case Exit:
+            ExitFlag = true;
+            break;
         }
 
 
-        for (int i = 0; i < UltimateBulletVector.size(); i++) {
-            UltimateBulletVector[i].DrawBullet();
-        }
 
-
-
-        EndDrawing();
 
     }
 

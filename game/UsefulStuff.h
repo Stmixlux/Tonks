@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "raylib.h"
 #include <deque>
+#include <vector>
 
 // This is file with useful functions/constants that are widely used
 
@@ -11,6 +12,8 @@ const int XCellCount = 16;
 const int YCellCount = 8;
 const int screenWidth = 1280;
 const int screenHeight = 720;
+const std::vector<Rectangle> outerWalls{ Rectangle{-10, -1, 15, screenHeight + 2}, Rectangle{screenWidth - 5 - screenWidth / XCellCount, -1, 15, screenHeight + 2},
+		Rectangle{-1, -10, screenWidth + 2, 15}, Rectangle{-1, screenHeight - 5 - screenHeight / YCellCount, screenWidth + 2, 15} };
 
 const int FPS = 60;
 
@@ -30,9 +33,12 @@ void operator-=(Vector2& a, const Vector2& b);
 Vector2 operator*(const Vector2& v, float ratio);
 double VectorProd(const Vector2& v1, const Vector2& v2);
 double GetDistance(const Vector2& v1, const Vector2& v2);
+double GetAngle2Vectors(const Vector2& v1, const Vector2& v2);
+double GetLen(const Vector2& v);
 
 void RotateVector2(Vector2& cent, Vector2& v, double angle);
 Vector2 GetRotatedVector(Vector2& cent, Vector2& v, double angle);
 
 // Auxiliary functions for collisions
+bool DumbCheck(const Rectangle& rect, const Vector2& v);
 

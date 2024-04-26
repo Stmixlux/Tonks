@@ -13,6 +13,9 @@ namespace player {
 		Rectangle PlayerRect;
 		std::vector<Vector2> PlayerPoints;
 		double PlayerAngle = 0;
+
+		bool IsMovingStraight = false;
+		bool IsRotating = false;
 		int RotationDirection = 1;
 		int MovingDirection = 1;
 
@@ -24,7 +27,8 @@ namespace player {
 		void MovePlayer();
 		void DrawPlayer();
 		void UpdatePoints();
-		void Collide(Rectangle);
+		void CollideWall(Rectangle);
+		bool CollidePoint(const Vector2&, const Vector2&);
 		void Shoot();
 	};
 }

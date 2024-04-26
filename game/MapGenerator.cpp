@@ -22,6 +22,9 @@ void MapGenerator::regenerateMap()
 
 void MapGenerator::Draw()
 {
+	for (int i = 0; i < 4; i++) {
+		DrawRectangleRec(outerWalls[i], BLACK);
+	}
 	for (int i = 0; i < n; i++) {
 		for (int j = 0; j < m; j++) {
 			map[i][j].Draw();
@@ -38,10 +41,9 @@ Tile MapGenerator::getTileAt(Vector2 position)
 
 std::vector<Rectangle> MapGenerator::getNeighbourhoodRect(Vector2 position)
 {
-	std::vector<Rectangle> res{ Rectangle{-10, -1, 15, screenHeight + 2}, Rectangle{screenWidth - 5, -1, 10.1, screenHeight + 2},
-		Rectangle{-1, -10, screenWidth + 2, 15}, Rectangle{-1, screenHeight-5, screenWidth + 2, 10.1} }; // Боковые стены
-	int x = (int)(position.x / screenWidth * n);
-	int y = (int)(position.y / screenHeight * m);
+	std::vector<Rectangle> res{outerWalls[0], outerWalls[1], outerWalls[2], outerWalls[3]}; // Border walls
+	int x = (int)((position.x - 0) / screenWidth * n);
+	int y = (int)((position.y - 0) / screenHeight * m);
 	map[x][y].getRectangles(res);
 
 	if (0 <= x - 1)	map[x - 1][y].getRectangles(res);

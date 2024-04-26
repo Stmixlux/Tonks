@@ -1,5 +1,5 @@
 #include "Bullet.h"
-#include "UsefulStuff.h"
+
 
 
 /*Bullet::~Bullet()
@@ -48,6 +48,7 @@ void Bullet::Collide(Rectangle rect)
 
 	if (DumbCheck(rect, test_vect_x)) {
 		Velocity.x *= -1;
+		return;
 	}
 	if (DumbCheck(rect, test_vect_y)) {
 		Velocity.y *= -1;

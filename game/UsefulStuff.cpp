@@ -33,6 +33,16 @@ double GetDistance(const Vector2& v1, const Vector2& v2)
 	return pow(pow(v1.x - v2.x, 2) + pow(v1.y - v2.y, 2), 0.5);
 }
 
+double GetAngle2Vectors(const Vector2& v1, const Vector2& v2)
+{
+	return acos((v1.x*v2.x + v1.y*v2.y)/GetLen(v1)/GetLen(v2));
+}
+
+double GetLen(const Vector2& v)
+{
+	return sqrt(pow(v.x, 2) + pow(v.y, 2));
+}
+
 
 void RotateVector2(Vector2& cent, Vector2& v, double angle) {
 	double old_x = v.x;
@@ -44,4 +54,10 @@ void RotateVector2(Vector2& cent, Vector2& v, double angle) {
 Vector2 GetRotatedVector(Vector2& cent, Vector2& v, double angle) {
 	RotateVector2(cent, v, angle);
 	return v;
+}
+
+bool DumbCheck(const Rectangle& rect, const Vector2& v)
+{
+	return (abs(rect.x - v.x) + abs(rect.x + rect.width - v.x) <= rect.width &&
+		abs(rect.y - v.y) + abs(rect.y + rect.height - v.y) <= rect.height);;
 }
