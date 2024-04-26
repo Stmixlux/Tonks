@@ -27,7 +27,7 @@
 using namespace boost::asio;
 using boost::system::error_code;
 io_service service;
-ip::tcp::endpoint ep(ip::address::from_string("127.0.0.1"), 38001);
+ip::tcp::endpoint ep(ip::address::from_string("192.168.1.8"), 38001);
 
 std::deque<Bullet> UltimateBulletVector;
 Sound soundBoard[100];
