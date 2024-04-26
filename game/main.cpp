@@ -23,6 +23,13 @@ int main ()
     MapGenerator Map(XCellCount, YCellCount);
 
 	SetTargetFPS(FPS);
+    InitAudioDevice();
+
+    Music music = LoadMusicStream("resources/background.mp3");
+    music.looping = true;
+
+    PlayMusicStream(music);
+    SetMusicVolume(music, 0.7);
 
     GameScreen CurrentScreen = StartMenu;
 
@@ -47,11 +54,11 @@ int main ()
     // Main game cycle
     while (!(ExitFlag || (WindowShouldClose() && !IsKeyDown(KEY_ESCAPE))))
     {
+		UpdateMusicStream(music);
         switch (CurrentScreen) {
 
         // Start window
         case StartMenu:
-
             if (PlayButton.IsPressed()) {
                 CurrentScreen = Game;
             }
@@ -164,6 +171,9 @@ int main ()
 
     }
 
+    UnloadMusicStream(music);   // Unload music stream buffers from RAM
+
+    CloseAudioDevice();
 
     CloseWindow();
 

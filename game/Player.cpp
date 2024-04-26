@@ -4,6 +4,8 @@
 using namespace player;
 Player::Player(Vector2 PS, Vector2 PP, Vector2 PV)
 {
+    shotSound = LoadSound("resources/shot.mp3");
+
     PlayerSize = PS;
     PlayerPosition = PP;
     PlayerVelocity = PV;
@@ -155,5 +157,6 @@ void Player::Shoot()
         InBetweenReloadTimer = 4;
         AvailableShots -= 1;
         ReloadTime = StdReloadTime;
+        PlaySound(shotSound);
     }
 }

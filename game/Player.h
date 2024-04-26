@@ -6,6 +6,7 @@
 namespace player {
 	class Player
 	{
+		Sound shotSound;
 	public:
 		Vector2 PlayerSize;
 		Vector2 PlayerPosition;
