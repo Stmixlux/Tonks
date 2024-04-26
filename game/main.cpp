@@ -4,6 +4,7 @@
 #include "MapGenerator.h"
 #include "Button.h"
 #include "Switch.h"
+#include <boost/chrono.hpp>
 
 std::deque<Bullet> UltimateBulletVector;
 Sound soundBoard[100];
@@ -20,6 +21,7 @@ using namespace player;
 
 int main ()
 {
+    boost::chrono::system_clock::time_point start = boost::chrono::system_clock::now();
 
 	InitWindow(screenWidth - screenWidth / XCellCount, screenHeight - screenHeight/YCellCount, "Tonks de game");
     MapGenerator Map(XCellCount, YCellCount);
@@ -54,6 +56,8 @@ int main ()
     bool ExitFlag = false;
     int CameraMode = 0;
 
+    boost::chrono::duration<double> sec = boost::chrono::system_clock::now() - start;
+    std::cout << "took " << sec.count() << " seconds\n";
     // Main game cycle
     while (!(ExitFlag || (WindowShouldClose() && !IsKeyDown(KEY_ESCAPE))))
     {
