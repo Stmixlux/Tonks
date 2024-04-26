@@ -4,20 +4,82 @@
 #include "MapGenerator.h"
 #include "Button.h"
 #include "Switch.h"
-#include <boost/chrono.hpp>
+
+#if defined(_WIN32)           
+#define NOGDI             // All GDI defines and routines
+#define NOUSER            // All USER defines and routines
+#endif
+
+// for networking
+#include <boost/thread.hpp>
+#include <boost/bind.hpp>
+#include <boost/asio.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
+// Basicly boost includes windows.h wich has it's own graphical stuff and so names conflict with raylib
+// So we cast this and it smh fixes it
+// We loove casting spells
+#if defined(_WIN32)           // raylib uses these names as function parameters
+#undef near
+#undef far
+#endif
+
+using namespace boost::asio;
+using boost::system::error_code;
+io_service service;
+ip::tcp::endpoint ep(ip::address::from_string("127.0.0.1"), 38001);
 
 std::deque<Bullet> UltimateBulletVector;
 Sound soundBoard[100];
 
-typedef enum GameScreen { StartMenu = 0, Game, Settings, Exit };
+typedef enum GameScreen { StartMenu = 0, Game, Settings, Exit, TestRoom };
 
 /* TODO:
     Fix bullet death    (get rid of memory leaks)
     Implement collision for tank (hard :( )
-
+    Sound of buttons
 */
 
 using namespace player;
+
+// TODO: Kill this shit with fire
+size_t read_complete(char* buff, const error_code& err, size_t bytes)
+{
+    if (err) return 0;
+    bool found = std::find(buff, buff + bytes, '\n') < buff + bytes;
+    // we read one-by-one until we get to enter, no buffering
+    return found ? 0 : 1;
+}
+
+void handle_connections()
+{
+    ip::tcp::acceptor acceptor(service, ip::tcp::endpoint(ip::tcp::v4(), 38001));
+    char buff[1024];
+    while (true)
+    {
+        ip::tcp::socket sock(service);
+        acceptor.accept(sock);
+        int bytes = read(sock, buffer(buff), boost::bind(read_complete, buff, _1, _2));
+        std::string msg(buff, bytes);
+        sock.write_some(buffer(msg));
+        sock.close();
+    }
+}
+
+void sync_echo(std::string msg)
+{
+    msg += "\n";
+    ip::tcp::socket sock(service);
+    sock.connect(ep);
+    sock.write_some(buffer(msg));
+    std::cout << "Sent";
+    char buf[1024];
+    int bytes = read(sock, buffer(buf), boost::bind(read_complete, buf, _1, _2));
+    std::string copy(buf, bytes - 1);
+    msg = msg.substr(0, msg.size() - 1);
+    std::cout << "server echoed our " << msg << ": " << (copy == msg ? "OK" : "FAIL") << std::endl;
+    sock.close();
+}
 
 int main ()
 {
@@ -64,18 +126,22 @@ int main ()
 		UpdateMusicStream(music);
         switch (CurrentScreen) {
 
-        // Start window
+            // Start window
         case StartMenu:
             if (PlayButton.IsPressed()) {
                 CurrentScreen = Game;
             }
-            
+
             else if (ExitButton.IsPressed()) {
                 CurrentScreen = Exit;
             }
 
             else if (SettingsButton.IsPressed()) {
                 CurrentScreen = Settings;
+            }
+
+            else if (IsKeyDown(KEY_T)) {
+                CurrentScreen = TestRoom;
             }
 
             BeginDrawing();
@@ -90,7 +156,7 @@ int main ()
 
             EndDrawing();
             break;
-        
+
         case Settings:
 
             if (BackButton.IsPressed()) {
@@ -107,8 +173,8 @@ int main ()
             EndDrawing();
             break;
 
-        // Actual game window
-        case Game:        
+            // Actual game window
+        case Game:
             // Player moving
             p1.MovePlayer();
 
@@ -132,14 +198,13 @@ int main ()
 
             // Shooting
             p1.Shoot();
-            
+
 
             // Here begins drawing
             BeginDrawing();
             ClearBackground(RAYWHITE);
 
             // Map drawing Standard mode
-            
             if (CameraMode == 0) {
                 Map.Draw();
             }
@@ -148,7 +213,7 @@ int main ()
                     DrawRectangleRec(r, BLACK);
                 }
             }
-            
+
             p1.DrawPlayer();
 
             // Calibrating pink circle in the center
@@ -166,18 +231,31 @@ int main ()
             EndDrawing();
             break;
 
-        // Case for exit
+            // Case for exit
         case Exit:
             ExitFlag = true;
             break;
+
+
+        case TestRoom:
+            bool mesFlag = true;
+            // For now using CameraMode to diffirintiate server/client
+            if (CameraMode) {
+                handle_connections();
+            }
+            else {
+                if (mesFlag) {
+                    std::cout << "May start";
+                    sync_echo("Staying Alive");
+                    mesFlag = false;
+                }
+            }
         }
-
-
-
-
     }
 
     UnloadMusicStream(music);   // Unload music stream buffers from RAM
+
+    // Should also unload sounds
 
     CloseAudioDevice();
 
