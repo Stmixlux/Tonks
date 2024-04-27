@@ -28,13 +28,13 @@
 using namespace boost::asio;
 using boost::system::error_code;
 io_service service;
-ip::tcp::endpoint ep(ip::address::from_string("127.0.0.1"), 38001); // "192.168.1.8"
+ip::tcp::endpoint ep(ip::address::from_string("192.168.1.8"), 38001); // "192.168.1.8"
 
 // some global vectors
 std::deque<Bullet> UltimateBulletVector;
 Sound soundBoard[100];
 
-typedef enum GameScreen { StartMenu = 0, Game, Settings, Exit, TestRoom };
+typedef enum GameScreen { StartMenu = 0, Network, Game, Settings, Exit, TestRoom };
 
 /* TODO:
     Fix bullet death    (get rid of memory leaks)
@@ -103,12 +103,19 @@ int main ()
 
 
     // Buttons
+    // Start menu
     Button PlayButton{ RealCenter - Vector2{0, 50}, Vector2{150, 80}, "Play" , 30, GRAY };
     Button SettingsButton{ RealCenter + Vector2{0, 50}, Vector2{150, 80}, "Settings", 30, GRAY };
     Button ExitButton{ RealCenter + Vector2{0, 150},  Vector2{100, 60}, "Exit", 30, GRAY };
+
+    // Settings menu
     Button BackButton{ RealCenter + Vector2{0, 150},  Vector2{100, 60}, "Back", 30, GRAY };
     Switch CameraModeButton{ RealCenter + Vector2{-100, 0},  Vector2{100, 60}, "Fog of war mode", 40};
-    InputTextWindow IP{ RealCenter + Vector2{-100, -100},  Vector2{300, 60}, "IP:", 40 };
+
+    // Network menu
+    Button HostButton{ RealCenter - Vector2{0, 100},  Vector2{100, 60}, "Host", 30, GRAY };
+    Button ConnectButton{ RealCenter - Vector2{0, 25},  Vector2{200, 60}, "Connect", 30, GRAY };
+    InputTextWindow IP{ RealCenter + Vector2{0, 50},  Vector2{350, 60}, "IP and port: ", 30 };
 
     // Some flags
     bool ExitFlag = false;
@@ -128,7 +135,7 @@ int main ()
             // Start window
         case StartMenu:
             if (PlayButton.IsPressed()) {
-                CurrentScreen = Game;
+                CurrentScreen = Network;
             }
 
             else if (ExitButton.IsPressed()) {
@@ -156,6 +163,30 @@ int main ()
             EndDrawing();
             break;
 
+        case Network:
+            
+            if (BackButton.IsPressed()) {
+                CurrentScreen = StartMenu;
+            }
+            else if (HostButton.IsPressed()) {
+                CurrentScreen = Game;
+            }
+
+            IP.UpdateState();
+            IP.UpdateText();
+
+            //std::cout << "IP: " << IP.GetIp() << " Port: " << IP.GetPort() << std::endl;
+
+
+            BeginDrawing();
+            ClearBackground(RAYWHITE);
+            HostButton.DrawButton();
+            ConnectButton.DrawButton();
+            BackButton.DrawButton();
+            IP.DrawInputTextWindow();
+            EndDrawing();
+            break;
+
         case Settings:
 
             if (BackButton.IsPressed()) {
@@ -169,7 +200,7 @@ int main ()
             DrawText("Placeholder page for settings", RealCenter.x - MeasureText("Placeholder page for settings", 30) / 2, RealCenter.y - 30 / 2 - 200, 30, BLACK);
             CameraModeButton.DrawSwitch();
             BackButton.DrawButton();
-            IP.DrawInputTextWindow();
+
             EndDrawing();
             break;
 
