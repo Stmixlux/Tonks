@@ -49,7 +49,8 @@ bool DumbCheck(const Rectangle& rect, const Vector2& v);
 
 
 // Global resource Managment
-enum SoundsId {SoundPlayerShoot, SoundBulletBurst};
+enum SoundsId {SoundPlayerShoot, SoundBulletBurst, SoundButtonClick};
 extern Sound soundBoard[100];
 void loadAllSounds();
+void unloadAllSounds();
 

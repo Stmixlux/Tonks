@@ -66,4 +66,12 @@ void loadAllSounds()
 {
 	soundBoard[SoundBulletBurst] = LoadSound("resources/burst.mp3");
 	soundBoard[SoundPlayerShoot] = LoadSound("resources/shot.mp3");
+	soundBoard[SoundButtonClick] = LoadSound("resources/buttonClick.wav");
+}
+
+void unloadAllSounds()
+{
+	for (int i = 0; i < std::size(soundBoard); i++) {
+		UnloadSound(soundBoard[i]);
+	}
 }

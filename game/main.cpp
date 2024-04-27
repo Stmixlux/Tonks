@@ -6,6 +6,8 @@
 #include "Switch.h"
 #include "InputTextWindow.h"
 
+#include <boost/json.hpp>
+
 #if defined(_WIN32)           
 #define NOGDI             // All GDI defines and routines
 #define NOUSER            // All USER defines and routines
@@ -39,12 +41,11 @@ typedef enum GameScreen { StartMenu = 0, Game, Settings, Exit, TestRoom };
 /* TODO:
     Fix bullet death    (get rid of memory leaks)
     Implement collision for tank (hard :( )
-    Sound of buttons
 */
 
 using namespace player;
 
-// TODO: Kill this shit with fire
+// TODO: Optimize server connection (one-time connected - always on line)
 size_t read_complete(char* buff, const error_code& err, size_t bytes)
 {
     if (err) return 0;
@@ -89,9 +90,6 @@ int main ()
     Music music = LoadMusicStream("resources/background.mp3");
     music.looping = true;
 
-    PlayMusicStream(music);
-    SetMusicVolume(music, 0.1);
-
     GameScreen CurrentScreen = StartMenu;
     loadAllSounds();
 
@@ -99,7 +97,7 @@ int main ()
 
     Vector2 RealCenter{ (screenWidth - screenWidth / XCellCount) / 2, (screenHeight - screenHeight / YCellCount) / 2 };
 
-    Player p1(StdPlayerSize, RealCenter + Vector2{(int)0.3*cellWidth, (int)0.3*cellHeight}, StdPlayerVelocity);
+    Player p1(StdPlayerSize, RealCenter + Vector2{(int)(XCellCount * 0.3 + 0.3)*cellWidth, (int)(-YCellCount * 0.3 + 0.3) *cellHeight}, StdPlayerVelocity);
 
 
     // Buttons
@@ -128,14 +126,21 @@ int main ()
             // Start window
         case StartMenu:
             if (PlayButton.IsPressed()) {
+                PlaySound(soundBoard[SoundButtonClick]);
                 CurrentScreen = Game;
+
+                // Start playing music
+                PlayMusicStream(music);
+                SetMusicVolume(music, 0.1);
             }
 
             else if (ExitButton.IsPressed()) {
+                PlaySound(soundBoard[SoundButtonClick]);
                 CurrentScreen = Exit;
             }
 
             else if (SettingsButton.IsPressed()) {
+                PlaySound(soundBoard[SoundButtonClick]);
                 CurrentScreen = Settings;
             }
 
@@ -159,6 +164,7 @@ int main ()
         case Settings:
 
             if (BackButton.IsPressed()) {
+                PlaySound(soundBoard[SoundButtonClick]);
                 CurrentScreen = StartMenu;
             }
             CameraModeButton.UpdateSwitch();
@@ -195,7 +201,6 @@ int main ()
                     send_message("Now in game and with M");
                 }
             }
-
 
             // Player moving
             p1.MovePlayer();
@@ -260,6 +265,7 @@ int main ()
 
 
         case TestRoom:
+            CurrentScreen = Settings;
             break;
             // For now using CameraMode to diffirintiate server/client
             /*
@@ -275,7 +281,7 @@ int main ()
 
     UnloadMusicStream(music);   // Unload music stream buffers from RAM
 
-    // Should also unload sounds
+    unloadAllSounds();
 
     CloseAudioDevice();
 
