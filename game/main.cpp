@@ -28,8 +28,9 @@
 using namespace boost::asio;
 using boost::system::error_code;
 io_service service;
-ip::tcp::endpoint ep(ip::address::from_string("192.168.1.8"), 38001);
+ip::tcp::endpoint ep(ip::address::from_string("127.0.0.1"), 38001); // "192.168.1.8"
 
+// some global vectors
 std::deque<Bullet> UltimateBulletVector;
 Sound soundBoard[100];
 
@@ -52,40 +53,33 @@ size_t read_complete(char* buff, const error_code& err, size_t bytes)
     return found ? 0 : 1;
 }
 
-void handle_connections()
+void handle_connections(std::string& message_container, bool& newMessage)
 {
     ip::tcp::acceptor acceptor(service, ip::tcp::endpoint(ip::tcp::v4(), 38001));
     char buff[1024];
+    std::cout << "In work";
     while (true)
     {
         ip::tcp::socket sock(service);
         acceptor.accept(sock);
         int bytes = read(sock, buffer(buff), boost::bind(read_complete, buff, _1, _2));
-        std::string msg(buff, bytes);
-        sock.write_some(buffer(msg));
+        message_container = std::string(buff, bytes);
+        newMessage = true;
         sock.close();
     }
 }
 
-void sync_echo(std::string msg)
+void send_message(std::string msg)
 {
     msg += "\n";
     ip::tcp::socket sock(service);
     sock.connect(ep);
     sock.write_some(buffer(msg));
-    std::cout << "Sent";
-    char buf[1024];
-    int bytes = read(sock, buffer(buf), boost::bind(read_complete, buf, _1, _2));
-    std::string copy(buf, bytes - 1);
-    msg = msg.substr(0, msg.size() - 1);
-    std::cout << "server echoed our " << msg << ": " << (copy == msg ? "OK" : "FAIL") << std::endl;
     sock.close();
 }
 
 int main ()
 {
-    boost::chrono::system_clock::time_point start = boost::chrono::system_clock::now();
-
 	InitWindow(screenWidth - screenWidth / XCellCount, screenHeight - screenHeight/YCellCount, "Tonks de game");
     MapGenerator Map(XCellCount, YCellCount);
 
@@ -118,14 +112,17 @@ int main ()
 
     // Some flags
     bool ExitFlag = false;
+    bool isConnectionThreaded = false;
     int CameraMode = 0;
 
-    boost::chrono::duration<double> sec = boost::chrono::system_clock::now() - start;
-    std::cout << "took " << sec.count() << " seconds\n";
+    // Message buffer for sync
+    std::string syncMessages;
+    bool newMessage = false;
+
     // Main game cycle
     while (!(ExitFlag || (WindowShouldClose() && !IsKeyDown(KEY_ESCAPE))))
     {
-		UpdateMusicStream(music);
+        UpdateMusicStream(music);
         switch (CurrentScreen) {
 
             // Start window
@@ -178,6 +175,28 @@ int main ()
 
             // Actual game window
         case Game:
+
+            // Syncronaizing area
+            if (CameraMode) { // If Server
+                // if we are the server, then will ask to thread connection
+                if (!isConnectionThreaded) {
+                    isConnectionThreaded = true;
+                    std::thread server(handle_connections, std::ref(syncMessages), std::ref(newMessage));
+                    server.detach();
+                }
+                // If new message arrived, then work with it
+                if (newMessage) {
+                    newMessage = false;
+                    p1.Shoot(true);
+                }
+            }
+            else { // If Client
+                if (IsKeyPressed(KEY_M)) {
+                    send_message("Now in game and with M");
+                }
+            }
+
+
             // Player moving
             p1.MovePlayer();
 
@@ -241,18 +260,16 @@ int main ()
 
 
         case TestRoom:
-            bool mesFlag = true;
+            break;
             // For now using CameraMode to diffirintiate server/client
+            /*
             if (CameraMode) {
-                handle_connections();
+                handle_connections(syncMessages);
             }
             else {
-                if (mesFlag) {
-                    std::cout << "May start";
-                    sync_echo("Staying Alive");
-                    mesFlag = false;
-                }
-            }
+                std::cout << "May start";
+                sync_echo("Staying Alive");
+            }*/
         }
     }
 

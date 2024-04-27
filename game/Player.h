@@ -30,6 +30,7 @@ namespace player {
 		void CollideWall(Rectangle);
 		bool CollidePoint(const Vector2&, const Vector2&);
 		void Shoot();
+		void Shoot(bool);
 	};
 }
 

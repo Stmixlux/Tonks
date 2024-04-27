@@ -160,3 +160,29 @@ void Player::Shoot()
         PlaySound(soundBoard[SoundPlayerShoot]);
     }
 }
+
+void Player::Shoot(bool reallyShouldShoot)
+{
+    const int StdReloadTime = 30;
+    if (AvailableShots == 5) {
+        ReloadTime = StdReloadTime;
+    }
+    else {
+        ReloadTime -= 1;
+        if (ReloadTime == 0) {
+            AvailableShots += 1;
+            ReloadTime = StdReloadTime;
+        }
+    }
+
+    if (InBetweenReloadTimer != 0) {
+        InBetweenReloadTimer -= 1;
+    }
+    if (InBetweenReloadTimer == 0 && AvailableShots != 0 && reallyShouldShoot) {
+        UltimateBulletVector.push_back(Bullet{ PlayerPosition + PlayerVelocity * 10, PlayerVelocity * 2, StdBulletRadius });
+        InBetweenReloadTimer = 4;
+        AvailableShots -= 1;
+        ReloadTime = StdReloadTime;
+        PlaySound(soundBoard[SoundPlayerShoot]);
+    }
+}
