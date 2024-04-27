@@ -58,9 +58,11 @@ void Player::DrawPlayer()
     DrawRectanglePro(PlayerRect, Vector2{ (float)(PlayerSize.x / 2) , (float)(PlayerSize.y / 2) }, PlayerAngle * 180 / PI, RED);
     DrawLineEx(PlayerPosition, PlayerPosition + (PlayerVelocity * 10), 3, BLACK);
     DrawCircleV(PlayerPosition, 10, DARKRED);
+    /*
     for (Vector2 point : PlayerPoints) {
         DrawCircleV(GetRotatedVector(PlayerPosition, point, PlayerAngle), 3, BLACK);
     }
+    */
 }
 
 void Player::CollideWall(Rectangle rect) {

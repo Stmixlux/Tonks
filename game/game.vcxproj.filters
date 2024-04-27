@@ -33,6 +33,9 @@
     <ClCompile Include="Switch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="InputTextWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MapGenerator.h" />
@@ -42,5 +45,6 @@
     <ClInclude Include="Tile.h" />
     <ClInclude Include="Button.h" />
     <ClInclude Include="Switch.h" />
+    <ClInclude Include="InputTextWindow.h" />
   </ItemGroup>
 </Project>

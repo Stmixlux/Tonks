@@ -4,6 +4,7 @@
 #include "MapGenerator.h"
 #include "Button.h"
 #include "Switch.h"
+#include "InputTextWindow.h"
 
 #if defined(_WIN32)           
 #define NOGDI             // All GDI defines and routines
@@ -18,7 +19,7 @@
 #include <boost/enable_shared_from_this.hpp>
 // Basicly boost includes windows.h wich has it's own graphical stuff and so names conflict with raylib
 // So we cast this and it smh fixes it
-// We loove casting spells
+// We love casting spells
 #if defined(_WIN32)           // raylib uses these names as function parameters
 #undef near
 #undef far
@@ -113,6 +114,7 @@ int main ()
     Button ExitButton{ RealCenter + Vector2{0, 150},  Vector2{100, 60}, "Exit", 30, GRAY };
     Button BackButton{ RealCenter + Vector2{0, 150},  Vector2{100, 60}, "Back", 30, GRAY };
     Switch CameraModeButton{ RealCenter + Vector2{-100, 0},  Vector2{100, 60}, "Fog of war mode", 40};
+    InputTextWindow IP{ RealCenter + Vector2{-100, -100},  Vector2{300, 60}, "IP:", 40 };
 
     // Some flags
     bool ExitFlag = false;
@@ -170,6 +172,7 @@ int main ()
             DrawText("Placeholder page for settings", RealCenter.x - MeasureText("Placeholder page for settings", 30) / 2, RealCenter.y - 30 / 2 - 200, 30, BLACK);
             CameraModeButton.DrawSwitch();
             BackButton.DrawButton();
+            IP.DrawInputTextWindow();
             EndDrawing();
             break;
 
