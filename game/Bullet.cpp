@@ -1,20 +1,12 @@
 #include "Bullet.h"
 
 
-/*Bullet::~Bullet()
-{
-	delete[] & Position;
-	delete[] & Velocity;
-
-}
-*/
 
 void Bullet::MoveBullet()
 {
 	Position += Velocity;
 	LivingTime -= 1;
 	if (LivingTime == 0) {
-		//IsAlive = false;
 		PlaySound(soundBoard[SoundBulletBurst]);
 		UltimateBulletVector.pop_front();
 	}

@@ -17,7 +17,7 @@
 #include <boost/asio.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
-// Basicly boost includes windows.h wich has it's own graphical stuff and so names conflict with raylib
+// Basically boost includes windows.h which has it's own graphical stuff and so names conflict with raylib
 // So we cast this and it smh fixes it
 // We love casting spells
 #if defined(_WIN32)           // raylib uses these names as function parameters
@@ -28,7 +28,7 @@
 using namespace boost::asio;
 using boost::system::error_code;
 io_service service;
-ip::tcp::endpoint ep(ip::address::from_string("192.168.1.8"), 38001); // "192.168.1.8"
+ip::tcp::endpoint ep(ip::address::from_string("10.55.130.31"), 38001); // "192.168.1.8"
 
 // some global vectors
 std::deque<Bullet> UltimateBulletVector;
@@ -37,7 +37,6 @@ Sound soundBoard[100];
 typedef enum GameScreen { StartMenu = 0, Network, Game, Settings, Exit, TestRoom };
 
 /* TODO:
-    Fix bullet death    (get rid of memory leaks)
     Implement collision for tank (hard :( )
     Sound of buttons
 */
@@ -126,6 +125,12 @@ int main ()
     std::string syncMessages;
     bool newMessage = false;
 
+    std::string ip;
+    int port;
+    bool created_ep = false;
+    bool got_ip = false;
+
+
     // Main game cycle
     while (!(ExitFlag || (WindowShouldClose() && !IsKeyDown(KEY_ESCAPE))))
     {
@@ -171,7 +176,15 @@ int main ()
             else if (HostButton.IsPressed()) {
                 CurrentScreen = Game;
             }
-
+            else if (ConnectButton.IsPressed()) {
+                ip = IP.GetIp();
+                port = IP.GetPort();
+                got_ip = true;
+            }
+            if (!created_ep && got_ip) {
+                ip::tcp::endpoint ep(ip::address::from_string(ip), port);
+                created_ep = true;
+            }
             IP.UpdateState();
             IP.UpdateText();
 
