@@ -30,7 +30,7 @@
 using namespace boost::asio;
 using boost::system::error_code;
 io_service service;
-ip::tcp::endpoint ep(ip::address::from_string("127.0.0.1"), 38001); // "192.168.1.8"
+ip::tcp::endpoint ep(ip::address::from_string("10.55.130.31"), 38001); // "192.168.1.8"
 
 // some global vectors
 std::deque<Bullet> UltimateBulletVector;
@@ -52,6 +52,17 @@ size_t read_complete(char* buff, const error_code& err, size_t bytes)
     bool found = std::find(buff, buff + bytes, '\n') < buff + bytes;
     // we read one-by-one until we get to enter, no buffering
     return found ? 0 : 1;
+}
+
+void waitForConnectionAsServer(ip::tcp::socket& workSock) {
+    ip::tcp::acceptor acceptor(service, ip::tcp::endpoint(ip::tcp::v4(), 38001));
+    char buff[1024];
+    std::cout << "Waiting for client";
+
+    acceptor.accept(workSock);
+    int bytes = read(workSock, buffer(buff), boost::bind(read_complete, buff, _1, _2));
+    
+    std::cout << "Connection secured";
 }
 
 void handle_connections(std::string& message_container, bool& newMessage)
@@ -113,7 +124,8 @@ int main ()
     bool isConnectionThreaded = false;
     int CameraMode = 0;
 
-    // Message buffer for sync
+    // Sruff for networks
+    ip::tcp::socket sock(service);
     std::string syncMessages;
     bool newMessage = false;
 

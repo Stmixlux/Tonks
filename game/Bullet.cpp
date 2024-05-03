@@ -1,14 +1,5 @@
 #include "Bullet.h"
 
-
-/*Bullet::~Bullet()
-{
-	delete[] & Position;
-	delete[] & Velocity;
-
-}
-*/
-
 void Bullet::MoveBullet()
 {
 	Position += Velocity;
