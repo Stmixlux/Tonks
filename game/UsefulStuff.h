@@ -20,7 +20,7 @@ const int cellHeight = screenHeight / YCellCount;
 const std::vector<Rectangle> outerWalls{ Rectangle{-10, -1, 15, screenHeight + 2}, Rectangle{screenWidth - 5 - screenWidth / XCellCount, -1, 15, screenHeight + 2},
 		Rectangle{-1, -10, screenWidth + 2, 15}, Rectangle{-1, screenHeight - 5 - screenHeight / YCellCount, screenWidth + 2, 15} };
 
-const int FPS = 60;
+const int FPS = 144;
 
 // Standart player parameters
 const Vector2 StdPlayerSize = { 30, 60 };

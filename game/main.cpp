@@ -156,17 +156,14 @@ int main()
             // Start window
         case StartMenu:
             if (PlayButton.IsPressed()) {
-                PlaySound(soundBoard[SoundButtonClick]);
                 CurrentScreen = Network;
             }
 
             else if (ExitButton.IsPressed()) {
-                PlaySound(soundBoard[SoundButtonClick]);
                 CurrentScreen = Exit;
             }
 
             else if (SettingsButton.IsPressed()) {
-                PlaySound(soundBoard[SoundButtonClick]);
                 CurrentScreen = Settings;
             }
 
@@ -235,7 +232,6 @@ int main()
         case Settings:
 
             if (BackButton.IsPressed()) {
-                PlaySound(soundBoard[SoundButtonClick]);
                 CurrentScreen = StartMenu;
             }
             CameraModeButton.UpdateSwitch();
