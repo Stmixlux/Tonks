@@ -22,28 +22,28 @@ void Player::UpdatePoints()
     PlayerPoints[3] = PlayerPosition + Vector2{ -0.5f * PlayerSize.x, 0.5f * PlayerSize.y };
 }
 
-void Player::MovePlayer()
+void Player::MovePlayer(bool inputs[4])
 {
     IsMovingStraight = false;
     IsRotating = false;
     RotationDirection = 1;
     MovingDirection = 1;
-    if (IsKeyDown(KEY_UP)) {
+    if (IsKeyDown(KEY_UP) || inputs[0]) {
         PlayerPosition += PlayerVelocity;
         IsMovingStraight = true;
     }
-    if (IsKeyDown(KEY_DOWN)) {
+    if (IsKeyDown(KEY_DOWN) || inputs[1]) {
         MovingDirection = -1;
         PlayerPosition -= PlayerVelocity;
         RotationDirection = -1;
         IsMovingStraight = true;
     }
-    if (IsKeyDown(KEY_RIGHT)) {
+    if (IsKeyDown(KEY_RIGHT) || inputs[2]) {
         PlayerAngle += RotationSpeed * RotationDirection;
         RotateVector2(Vector2{}, PlayerVelocity, RotationSpeed * RotationDirection);
         IsRotating = true;
     }
-    if (IsKeyDown(KEY_LEFT)) {
+    if (IsKeyDown(KEY_LEFT) || inputs[3]) {
         RotationDirection *= -1;
         PlayerAngle += RotationSpeed * RotationDirection;
         RotateVector2(Vector2{}, PlayerVelocity, RotationSpeed * RotationDirection);
@@ -51,6 +51,12 @@ void Player::MovePlayer()
     }
     PlayerRect = { PlayerPosition.x, PlayerPosition.y, PlayerSize.x, PlayerSize.y };
     UpdatePoints();
+}
+
+void Player::MovePlayer()
+{
+    bool inp[4]{ false, false, false, false };
+    MovePlayer(inp);
 }
 
 void Player::DrawPlayer()
@@ -135,7 +141,7 @@ bool Player::CollidePoint(const Vector2& point, const Vector2& shift)
     return false;
 }
 
-void Player::Shoot()
+void Player::Shoot(bool isShooting)
 {
     const int StdReloadTime = 30;
     if (AvailableShots == 5) {
@@ -152,33 +158,7 @@ void Player::Shoot()
     if (InBetweenReloadTimer != 0) {
         InBetweenReloadTimer -= 1;
     }
-    if (InBetweenReloadTimer == 0 && AvailableShots != 0 && IsKeyPressed(KEY_SPACE)) {
-        UltimateBulletVector.push_back(Bullet{ PlayerPosition + PlayerVelocity * 10, PlayerVelocity * 2, StdBulletRadius });
-        InBetweenReloadTimer = 4;
-        AvailableShots -= 1;
-        ReloadTime = StdReloadTime;
-        PlaySound(soundBoard[SoundPlayerShoot]);
-    }
-}
-
-void Player::Shoot(bool reallyShouldShoot)
-{
-    const int StdReloadTime = 30;
-    if (AvailableShots == 5) {
-        ReloadTime = StdReloadTime;
-    }
-    else {
-        ReloadTime -= 1;
-        if (ReloadTime == 0) {
-            AvailableShots += 1;
-            ReloadTime = StdReloadTime;
-        }
-    }
-
-    if (InBetweenReloadTimer != 0) {
-        InBetweenReloadTimer -= 1;
-    }
-    if (InBetweenReloadTimer == 0 && AvailableShots != 0 && reallyShouldShoot) {
+    if (InBetweenReloadTimer == 0 && AvailableShots != 0 && (IsKeyPressed(KEY_SPACE) || isShooting)) {
         UltimateBulletVector.push_back(Bullet{ PlayerPosition + PlayerVelocity * 10, PlayerVelocity * 2, StdBulletRadius });
         InBetweenReloadTimer = 4;
         AvailableShots -= 1;

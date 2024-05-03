@@ -30,7 +30,6 @@
 using namespace boost::asio;
 using boost::system::error_code;
 io_service service;
-ip::tcp::endpoint ep(ip::address::from_string("192.168.1.8"), 38001); // "192.168.1.8"
 
 // some global vectors
 std::deque<Bullet> UltimateBulletVector;
@@ -44,7 +43,7 @@ typedef enum GameScreen { StartMenu = 0, Network, Game, Settings, Exit, TestRoom
 
 using namespace player;
 
-// TODO: Optimize server connection (one-time connected - always on line)
+// ToDo: a JSON messages transfer, perhaps?
 size_t read_complete(char* buff, const error_code& err, size_t bytes)
 {
     if (err) return 0;
@@ -53,48 +52,51 @@ size_t read_complete(char* buff, const error_code& err, size_t bytes)
     return found ? 0 : 1;
 }
 
-void waitForConnectionAsServer(ip::tcp::socket& workSock) {
+void waitForConnectionAsServer(ip::tcp::socket& sock) {
     ip::tcp::acceptor acceptor(service, ip::tcp::endpoint(ip::tcp::v4(), 38001));
     char buff[1024];
-    std::cout << "Waiting for client";
+    std::cout << "Waiting for client\n";
 
-    acceptor.accept(workSock);
-    int bytes = read(workSock, buffer(buff), boost::bind(read_complete, buff, _1, _2));
+    acceptor.accept(sock);
     
-    std::cout << "Connection secured";
+    std::cout << "Connection secured\n";
 }
 
-void handle_connections(std::string& message_container, bool& newMessage)
-{
-    ip::tcp::acceptor acceptor(service, ip::tcp::endpoint(ip::tcp::v4(), 38001));
-    char buff[1024];
-    std::cout << "In work";
-    while (true)
-    {
-        ip::tcp::socket sock(service);
-        acceptor.accept(sock);
-        int bytes = read(sock, buffer(buff), boost::bind(read_complete, buff, _1, _2));
-        message_container = std::string(buff, bytes);
-        newMessage = true;
-        sock.close();
+void connectAsClient(ip::tcp::endpoint& ep, ip::tcp::socket& sock) {
+    try {
+        sock.connect(ep);
+    }
+    catch (boost::system::system_error& err) {
+        std::cout << "Something went wrong: " << err.what() << std::endl;
     }
 }
 
-void send_message(std::string msg)
+void readMessage(ip::tcp::socket& sock, std::string& message_container, bool& isMessageNew)
 {
-    msg += "\n";
-    ip::tcp::socket sock(service);
-    sock.connect(ep);
-    sock.write_some(buffer(msg));
-    sock.close();
+    char buff[1024];
+    if (sock.available()) {
+        int bytes = read(sock, buffer(buff), boost::bind(read_complete, buff, _1, _2));
+        isMessageNew = true;
+        message_container = std::string(buff, bytes);
+
+        std::cout << "Recieved message:" << message_container << std::endl;
+    }
 }
 
-int main ()
+void writeMessage(std::string msg, ip::tcp::socket& sock)
 {
-	InitWindow(screenWidth - screenWidth / XCellCount, screenHeight - screenHeight/YCellCount, "Tonks de game");
+    std::cout << "Sent Message:" << msg << std::endl;
+    msg += "\n";
+    sock.write_some(buffer(msg));
+}
+
+
+int main()
+{
+    InitWindow(screenWidth - screenWidth / XCellCount, screenHeight - screenHeight / YCellCount, "Tonks de game");
     MapGenerator Map(XCellCount, YCellCount);
 
-	SetTargetFPS(FPS);
+    SetTargetFPS(FPS);
     InitAudioDevice();
 
     Music music = LoadMusicStream("resources/background.mp3");
@@ -107,7 +109,7 @@ int main ()
 
     Vector2 RealCenter{ (screenWidth - screenWidth / XCellCount) / 2, (screenHeight - screenHeight / YCellCount) / 2 };
 
-    Player p1(StdPlayerSize, RealCenter + Vector2{(int)(XCellCount * 0.3 + 0.3)*cellWidth, (int)(-YCellCount * 0.3 + 0.3) *cellHeight}, StdPlayerVelocity);
+    Player p1(StdPlayerSize, RealCenter + Vector2{ (int)(XCellCount * 0.3 + 0.3) * cellWidth, (int)(-YCellCount * 0.3 + 0.3) * cellHeight }, StdPlayerVelocity);
 
 
     // Buttons
@@ -118,7 +120,7 @@ int main ()
 
     // Settings menu
     Button BackButton{ RealCenter + Vector2{0, 150},  Vector2{100, 60}, "Back", 30, GRAY };
-    Switch CameraModeButton{ RealCenter + Vector2{-100, 0},  Vector2{100, 60}, "Fog of war mode", 40};
+    Switch CameraModeButton{ RealCenter + Vector2{-100, 0},  Vector2{100, 60}, "Fog of war mode", 40 };
 
     // Network menu
     Button HostButton{ RealCenter - Vector2{0, 100},  Vector2{100, 60}, "Host", 30, GRAY };
@@ -127,13 +129,16 @@ int main ()
 
     // Some flags
     bool ExitFlag = false;
-    bool isConnectionThreaded = false;
     int CameraMode = 0;
+    bool Inputs[4];
 
     // Sruff for networks
+    ip::tcp::endpoint ep(ip::address::from_string("127.0.0.1"), 38001); // "192.168.1.8"
     ip::tcp::socket sock(service);
-    std::string syncMessages;
-    bool newMessage = false;
+    std::string message; // Here would lie the last message
+    std::string toSend;
+    bool isMessageNew = false;
+    bool isHost = true;
 
     std::string ip;
     int port;
@@ -144,6 +149,7 @@ int main ()
     // Main game cycle
     while (!(ExitFlag || (WindowShouldClose() && !IsKeyDown(KEY_ESCAPE))))
     {
+        isHost = CameraMode; // Easier to debug
         UpdateMusicStream(music);
         switch (CurrentScreen) {
 
@@ -151,10 +157,6 @@ int main ()
         case StartMenu:
             if (PlayButton.IsPressed()) {
                 PlaySound(soundBoard[SoundButtonClick]);
-
-                // Start playing music
-                PlayMusicStream(music);
-                SetMusicVolume(music, 0.1);
                 CurrentScreen = Network;
             }
 
@@ -186,14 +188,27 @@ int main ()
             break;
 
         case Network:
-            
+
             if (BackButton.IsPressed()) {
                 CurrentScreen = StartMenu;
             }
             else if (HostButton.IsPressed()) {
+
+                if (isHost) {
+                    waitForConnectionAsServer(sock);
+                }
+                else { // If client try getting connection with host
+                    connectAsClient(ep, sock);
+                }
+
+                // Start playing music
+                PlayMusicStream(music);
+                SetMusicVolume(music, 0.0);
                 CurrentScreen = Game;
             }
             else if (ConnectButton.IsPressed()) {
+                isHost = false;
+
                 ip = IP.GetIp();
                 port = IP.GetPort();
                 got_ip = true;
@@ -239,23 +254,51 @@ int main ()
         case Game:
 
             // Syncronaizing area
-            if (CameraMode) { // If Server
-                // if we are the server, then will ask to thread connection
-                if (!isConnectionThreaded) {
-                    isConnectionThreaded = true;
-                    std::thread server(handle_connections, std::ref(syncMessages), std::ref(newMessage));
-                    server.detach();
-                }
+            if (isHost) { // If Server
+                for (bool& inp : Inputs)  inp = false; // Nullify inputs
                 // If new message arrived, then work with it
-                if (newMessage) {
-                    newMessage = false;
-                    p1.Shoot(true);
+                readMessage(sock, message, isMessageNew);
+
+                if (isMessageNew) {
+                    isMessageNew = false;
+                    if (message.find("f") != message.npos) {
+                        p1.Shoot(true);
+                    }
+                    if (message.find("w") != message.npos) {
+                        std::cout << "I count that as a win";
+                        Inputs[0] = true;
+                    }
+                    if (message.find("s") != message.npos) {
+                        Inputs[1] = true;
+                    }
+                    if (message.find("d") != message.npos) {
+                        Inputs[2] = true;
+                    }
+                    if (message.find("a") != message.npos) {
+                        Inputs[3] = true;
+                    }
+                    p1.MovePlayer(Inputs);
                 }
             }
+
             else { // If Client
-                if (IsKeyPressed(KEY_M)) {
-                    send_message("Now in game and with M");
+                toSend = "";
+                if (IsKeyDown(KEY_UP)) {
+                    toSend += "w";
                 }
+                if (IsKeyDown(KEY_DOWN)) {
+                    toSend += "s";
+                }
+                if (IsKeyDown(KEY_RIGHT)) {
+                    toSend += "d";
+                }
+                if (IsKeyDown(KEY_LEFT)) {
+                    toSend += "a";
+                }
+                if (IsKeyDown(KEY_SPACE)) {
+                    toSend += "f";
+                }
+                writeMessage(toSend, sock);
             }
 
             // Player moving
