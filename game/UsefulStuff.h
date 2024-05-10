@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <boost/lexical_cast.hpp>
 
 // This is file with useful functions/constants that are widely used
 

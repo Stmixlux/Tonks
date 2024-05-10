@@ -74,11 +74,16 @@ class MapGenerator
 
 public:
 
-	// Real gameMap (for now just rectangles)
+	// Real gameMap (Now made from Tiles)
 	std::vector<std::vector<Tile>> map;
 	MapGenerator(int a, int b);
 
+	// for debug purpusose
 	void regenerateMap();
+
+	// for syncronisation
+	std::string const toString();
+	void setMapFromString(std::string& msg);
 
 	// Useful methods
 	void Draw();

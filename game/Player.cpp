@@ -166,3 +166,9 @@ void Player::Shoot(bool isShooting)
         PlaySound(soundBoard[SoundPlayerShoot]);
     }
 }
+
+std::string player::Player::toString()
+{
+    std::string res = boost::lexical_cast<std::string>(PlayerAngle) + ";" + boost::lexical_cast<std::string>(PlayerPosition.x) + ";" + boost::lexical_cast<std::string>(PlayerPosition.y) + ";";
+    return res;
+}

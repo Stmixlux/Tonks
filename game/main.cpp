@@ -7,6 +7,7 @@
 #include "InputTextWindow.h"
 
 #include <boost/json.hpp>
+#include <boost/lexical_cast.hpp>
 
 #if defined(_WIN32)           
 #define NOGDI             // All GDI defines and routines
@@ -63,11 +64,14 @@ void waitForConnectionAsServer(ip::tcp::socket& sock) {
 }
 
 void connectAsClient(ip::tcp::endpoint& ep, ip::tcp::socket& sock) {
-    try {
-        sock.connect(ep);
-    }
-    catch (boost::system::system_error& err) {
-        std::cout << "Something went wrong: " << err.what() << std::endl;
+    while (true) {
+        try {
+            sock.connect(ep);
+            break;
+        }
+        catch (boost::system::system_error& err) {
+            std::cout << "Something went wrong: " << err.what() << std::endl;
+        }
     }
 }
 
@@ -78,16 +82,19 @@ void readMessage(ip::tcp::socket& sock, std::string& message_container, bool& is
         int bytes = read(sock, buffer(buff), boost::bind(read_complete, buff, _1, _2));
         isMessageNew = true;
         message_container = std::string(buff, bytes);
-
-        std::cout << "Recieved message:" << message_container << std::endl;
     }
 }
 
 void writeMessage(std::string msg, ip::tcp::socket& sock)
 {
-    std::cout << "Sent Message:" << msg << std::endl;
     msg += "\n";
     sock.write_some(buffer(msg));
+}
+
+double parseMessage(std::string& msg) {
+    double res = boost::lexical_cast<double>(msg.substr(0, msg.find(";")));
+    msg = msg.substr(msg.find(";") + 1, msg.size()); // overflow size so it cuts till the end
+    return res;
 }
 
 
@@ -144,7 +151,7 @@ int main()
     int port;
     bool created_ep = false;
     bool got_ip = false;
-
+    bool got_map = false;
 
     // Main game cycle
     while (!(ExitFlag || (WindowShouldClose() && !IsKeyDown(KEY_ESCAPE))))
@@ -193,6 +200,8 @@ int main()
 
                 if (isHost) {
                     waitForConnectionAsServer(sock);
+                    writeMessage(Map.toString(), sock);
+                    std::cout << Map.toString();
                 }
                 else { // If client try getting connection with host
                     connectAsClient(ep, sock);
@@ -248,20 +257,19 @@ int main()
 
             // Actual game window
         case Game:
+            readMessage(sock, message, isMessageNew);
 
             // Syncronaizing area
             if (isHost) { // If Server
                 for (bool& inp : Inputs)  inp = false; // Nullify inputs
-                // If new message arrived, then work with it
-                readMessage(sock, message, isMessageNew);
 
+                // Handle input messages
                 if (isMessageNew) {
                     isMessageNew = false;
                     if (message.find("f") != message.npos) {
                         p1.Shoot(true);
                     }
                     if (message.find("w") != message.npos) {
-                        std::cout << "I count that as a win";
                         Inputs[0] = true;
                     }
                     if (message.find("s") != message.npos) {
@@ -275,9 +283,35 @@ int main()
                     }
                     p1.MovePlayer(Inputs);
                 }
+
+                // Send the whole state_of_the_game to client
+                toSend = p1.toString();
+                toSend += boost::lexical_cast<std::string>(UltimateBulletVector.size()) + ";";
+                for (Bullet& b : UltimateBulletVector) toSend += b.toString();
+                writeMessage(toSend, sock);
             }
 
             else { // If Client
+
+                // handle incoming message
+                if (isMessageNew) {
+                    isMessageNew = false;
+                    if (!got_map) {
+                        Map.setMapFromString(message);
+                        got_map = true;
+                    }
+                    else {
+                        // let's recollect all data:
+                        std::cout << "Angle: " << parseMessage(message) << "\n";
+                        std::cout << "Player position (x, y): (" << parseMessage(message) << ", " << parseMessage(message) << ")\n";
+                        int numberOfBullets = parseMessage(message);
+                        for (int i = 0; i < numberOfBullets; i++) {
+                            std::cout << "Bullet position (x, y): (" << parseMessage(message) << ", " << parseMessage(message) << ")\n";
+                        }
+                    }
+                }
+
+                // send inputs
                 toSend = "";
                 if (IsKeyDown(KEY_UP)) {
                     toSend += "w";
@@ -330,10 +364,12 @@ int main()
             if (CameraMode == 0) {
                 Map.Draw();
             }
-            else if (CameraMode == 1) {
-                for (Rectangle r : Map.getNeighbourhoodRect(p1.PlayerPosition)) {
+            else if (CameraMode == 1) {/*
+                                for (Rectangle r : Map.getNeighbourhoodRect(p1.PlayerPosition)) {
                     DrawRectangleRec(r, BLACK);
                 }
+                */
+                Map.Draw();
             }
 
             p1.DrawPlayer();
