@@ -1,7 +1,5 @@
 #include "Bullet.h"
 
-
-
 void Bullet::MoveBullet()
 {
 	Position += Velocity;
@@ -47,4 +45,10 @@ void Bullet::Collide(Rectangle rect)
 	}
 	
 
+}
+
+std::string Bullet::toString()
+{
+	std::string res = boost::lexical_cast<std::string>(Position.x) + ";" + boost::lexical_cast<std::string>(Position.y) + ";";
+	return res;
 }

@@ -20,6 +20,26 @@ void MapGenerator::regenerateMap()
 	generateMap();
 }
 
+std::string const MapGenerator::toString()
+{
+	std::string msg = "";
+	for (int i = 0; i < n; i++) {
+		for (int j = 0; j < m; j++) {
+			msg += (cellMap[i][j].finalTileIndex+80);
+		}
+	}
+	return msg;
+}
+
+void MapGenerator::setMapFromString(std::string& msg)
+{
+	for (int i = 0; i < n; i++) {
+		for (int j = 0; j < m; j++) {
+			map[i][j].Update(i, j, Tileset[msg[m * i + j] - 80].sidesStates);
+		}
+	}
+}
+
 void MapGenerator::Draw()
 {
 	for (int i = 0; i < 4; i++) {
@@ -61,7 +81,7 @@ std::vector<Rectangle> MapGenerator::getNeighbourhoodRect(Vector2 position)
 
 void MapGenerator::loadTiles()
 {
-	// Temporary solution, supposed to load textures down the road (There's nothing more eternal than temporary solution)
+	// Temporary solution, supposed to load textures down the road (There's nothing more eternal than a temporary solution)
 	// Load base Tiles (configuration of 0/1 sides and their's generation probobalities (weights))
 	Tileset.push_back(GenerationTile('f', 30, 0, 0, 0, 0));
 	Tileset.push_back(GenerationTile('a', 10, 1, 0, 0, 0));

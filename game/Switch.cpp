@@ -11,11 +11,13 @@ void Switch::UpdateSwitch()
 	Vector2 MousePos = GetMousePosition();
 	if (DumbCheck(Rectangle{ Position.x - Size.x / 2, Position.y - Size.y / 2, Size.x, Size.y }, MousePos) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
 		if (state == 0) {
+			PlaySound(soundBoard[SoundButtonClick]);
 			state = 1;
 			text = "ON";
 			color = GREEN;
 		}
 		else { 
+			PlaySound(soundBoard[SoundButtonClick]);
 			state = 0; 
 			text = "OFF";
 			color = RED;

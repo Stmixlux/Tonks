@@ -26,13 +26,15 @@ namespace player {
 
 		Player(Vector2 PS, Vector2 PP, Vector2 PV);
 		void MovePlayer();
+		void MovePlayer(bool inputs[4]);
 		void DrawPlayer();
 		void UpdatePoints();
 		bool CheckCollisionWall(Rectangle);
 		void CollideWall(Rectangle);
 		bool CollidePoint(const Vector2&, const Vector2&);
-		void Shoot();
-		void Shoot(bool);
+		void Shoot(bool isShooting=false);
+
+		std::string toString();
 	};
 }
 
