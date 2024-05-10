@@ -164,6 +164,11 @@ bool Player::CollidePoint(const Vector2& point, const Vector2& shift)
     return false;
 }
 
+void Player::Shoot()
+{
+    Shoot(IsKeyPressed(KEY_SPACE));
+}
+
 void Player::Shoot(bool isShooting)
 {
     const int StdReloadTime = 30;
@@ -181,7 +186,7 @@ void Player::Shoot(bool isShooting)
     if (InBetweenReloadTimer != 0) {
         InBetweenReloadTimer -= 1;
     }
-    if (InBetweenReloadTimer == 0 && AvailableShots != 0 && (IsKeyPressed(KEY_SPACE) || isShooting)) {
+    if (InBetweenReloadTimer == 0 && AvailableShots != 0 && (isShooting)) {
         UltimateBulletVector.push_back(Bullet{ PlayerPosition + PlayerVelocity * 10, PlayerVelocity * 2, StdBulletRadius });
         InBetweenReloadTimer = 4;
         AvailableShots -= 1;
@@ -195,11 +200,6 @@ void Player::DrawPlayer()
     DrawRectanglePro(PlayerRect, Vector2{ (float)(PlayerSize.x / 2) , (float)(PlayerSize.y / 2) }, PlayerAngle * 180 / PI, PlayerColor);
     DrawLineEx(PlayerPosition, PlayerPosition + (PlayerVelocity * 10), 3, BLACK);
     DrawCircleV(PlayerPosition, 10, TurretColor);
-    /*
-    for (Vector2 point : PlayerPoints) {
-        DrawCircleV(GetRotatedVector(PlayerPosition, point, PlayerAngle), 3, BLACK);
-    }
-    */
 }
 
 std::string player::Player::toString()

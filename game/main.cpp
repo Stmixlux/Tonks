@@ -286,6 +286,7 @@ int main()
             }
             p1.MovePlayer(Map.getNeighbourhoodRect(p1.PlayerPosition));
             p1.Shoot();
+            p2.Shoot(false);
 
             // Collsion with walls for bullets
             for (int i = 0; i < UltimateBulletVector.size(); i++) {
@@ -379,7 +380,7 @@ int main()
             if (IsKeyDown(KEY_LEFT)) {
                 toSend += "a";
             }
-            if (IsKeyDown(KEY_SPACE)) {
+            if (IsKeyPressed(KEY_SPACE)) {
                 toSend += "f";
             }
             writeMessage(toSend, sock);

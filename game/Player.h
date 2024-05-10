@@ -36,7 +36,8 @@ namespace player {
 		bool CheckCollisionWall(Rectangle);
 		void CollideWall(Rectangle);
 		bool CollidePoint(const Vector2&, const Vector2&);
-		void Shoot(bool isShooting=false);
+		void Shoot();
+		void Shoot(bool isShooting);
 
 		std::string toString();
 	};
