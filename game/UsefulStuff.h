@@ -4,7 +4,6 @@
 #include <vector>
 #include <map>
 #include <string>
-#include <boost/lexical_cast.hpp>
 
 // This is file with useful functions/constants that are widely used
 
@@ -21,7 +20,7 @@ const int cellHeight = screenHeight / YCellCount;
 const std::vector<Rectangle> outerWalls{ Rectangle{-10, -1, 15, screenHeight + 2}, Rectangle{screenWidth - 5 - screenWidth / XCellCount, -1, 15, screenHeight + 2},
 		Rectangle{-1, -10, screenWidth + 2, 15}, Rectangle{-1, screenHeight - 5 - screenHeight / YCellCount, screenWidth + 2, 15} };
 
-const int FPS = 144;
+const int FPS = 60;
 
 // Standart player parameters
 const Vector2 StdPlayerSize = { 30, 60 };
@@ -51,8 +50,7 @@ bool DumbCheck(const Rectangle& rect, const Vector2& v);
 
 
 // Global resource Managment
-enum SoundsId {SoundPlayerShoot, SoundBulletBurst, SoundButtonClick};
+enum SoundsId {SoundPlayerShoot, SoundBulletBurst};
 extern Sound soundBoard[100];
 void loadAllSounds();
-void unloadAllSounds();
 

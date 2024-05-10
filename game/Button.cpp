@@ -18,7 +18,6 @@ void Button::DrawButton()
 bool Button::IsPressed() {
 	Vector2 MousePos = GetMousePosition();
 	if (DumbCheck(Rectangle{ Position.x - Size.x/2, Position.y - Size.y/2, Size.x, Size.y }, MousePos) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-		PlaySound(soundBoard[SoundButtonClick]);
 		return true;
 	}
 	return false;

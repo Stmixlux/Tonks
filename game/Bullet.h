@@ -20,7 +20,6 @@ public:
 	void DrawBullet();
 	void Collide(Rectangle rect);
 
-	std::string toString();
 };
 
 extern std::deque<Bullet> UltimateBulletVector;

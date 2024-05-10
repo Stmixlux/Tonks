@@ -6,9 +6,6 @@
 #include "Switch.h"
 #include "InputTextWindow.h"
 
-#include <boost/json.hpp>
-#include <boost/lexical_cast.hpp>
-
 #if defined(_WIN32)           
 #define NOGDI             // All GDI defines and routines
 #define NOUSER            // All USER defines and routines
@@ -31,6 +28,7 @@
 using namespace boost::asio;
 using boost::system::error_code;
 io_service service;
+ip::tcp::endpoint ep(ip::address::from_string("10.55.130.31"), 38001); // "192.168.1.8"
 
 // some global vectors
 std::deque<Bullet> UltimateBulletVector;
@@ -44,7 +42,7 @@ typedef enum GameScreen { StartMenu = 0, Network, SingleMode, Settings, Exit, Te
 
 using namespace player;
 
-// ToDo: a JSON messages transfer, perhaps?
+// TODO: Kill this shit with fire
 size_t read_complete(char* buff, const error_code& err, size_t bytes)
 {
     if (err) return 0;
@@ -53,61 +51,44 @@ size_t read_complete(char* buff, const error_code& err, size_t bytes)
     return found ? 0 : 1;
 }
 
-void waitForConnectionAsServer(ip::tcp::socket& sock) {
+void handle_connections(std::string& message_container, bool& newMessage)
+{
     ip::tcp::acceptor acceptor(service, ip::tcp::endpoint(ip::tcp::v4(), 38001));
     char buff[1024];
-    std::cout << "Waiting for client\n";
-
-    acceptor.accept(sock);
-    
-    std::cout << "Connection secured\n";
-}
-
-void connectAsClient(ip::tcp::endpoint& ep, ip::tcp::socket& sock) {
-    while (true) {
-        try {
-            sock.connect(ep);
-            break;
-        }
-        catch (boost::system::system_error& err) {
-            std::cout << "Something went wrong: " << err.what() << std::endl;
-        }
-    }
-}
-
-void readMessage(ip::tcp::socket& sock, std::string& message_container, bool& isMessageNew)
-{
-    char buff[1024];
-    if (sock.available()) {
+    std::cout << "In work";
+    while (true)
+    {
+        ip::tcp::socket sock(service);
+        acceptor.accept(sock);
         int bytes = read(sock, buffer(buff), boost::bind(read_complete, buff, _1, _2));
-        isMessageNew = true;
         message_container = std::string(buff, bytes);
+        newMessage = true;
+        sock.close();
     }
 }
 
-void writeMessage(std::string msg, ip::tcp::socket& sock)
+void send_message(std::string msg)
 {
     msg += "\n";
+    ip::tcp::socket sock(service);
+    sock.connect(ep);
     sock.write_some(buffer(msg));
+    sock.close();
 }
 
-double parseMessage(std::string& msg) {
-    double res = boost::lexical_cast<double>(msg.substr(0, msg.find(";")));
-    msg = msg.substr(msg.find(";") + 1, msg.size()); // overflow size so it cuts till the end
-    return res;
-}
-
-
-int main()
+int main ()
 {
-    InitWindow(screenWidth - screenWidth / XCellCount, screenHeight - screenHeight / YCellCount, "Tonks de game");
+	InitWindow(screenWidth - screenWidth / XCellCount, screenHeight - screenHeight/YCellCount, "Tonks de game");
     MapGenerator Map(XCellCount, YCellCount);
 
-    SetTargetFPS(FPS);
+	SetTargetFPS(FPS);
     InitAudioDevice();
 
     Music music = LoadMusicStream("resources/background.mp3");
     music.looping = true;
+
+    PlayMusicStream(music);
+    SetMusicVolume(music, 0.1);
 
     GameScreen CurrentScreen = StartMenu;
     loadAllSounds();
@@ -116,7 +97,7 @@ int main()
 
     Vector2 RealCenter{ (screenWidth - screenWidth / XCellCount) / 2, (screenHeight - screenHeight / YCellCount) / 2 };
 
-    Player p1(StdPlayerSize, RealCenter + Vector2{ (int)(XCellCount * 0.3 + 0.3) * cellWidth, (int)(-YCellCount * 0.3 + 0.3) * cellHeight }, StdPlayerVelocity);
+    Player p1(StdPlayerSize, RealCenter + Vector2{(int)0.3*cellWidth, (int)0.3*cellHeight}, StdPlayerVelocity);
 
 
     // Buttons
@@ -127,7 +108,7 @@ int main()
 
     // Settings menu
     Button BackButton{ RealCenter + Vector2{0, 150},  Vector2{100, 60}, "Back", 30, GRAY };
-    Switch CameraModeButton{ RealCenter + Vector2{-100, 0},  Vector2{100, 60}, "Fog of war mode", 40 };
+    Switch CameraModeButton{ RealCenter + Vector2{-100, 0},  Vector2{100, 60}, "Fog of war mode", 40};
 
     // Network menu
     Button Single{ RealCenter - Vector2{0, 175},  Vector2{100, 60}, "Single", 30, GRAY };
@@ -137,27 +118,22 @@ int main()
 
     // Some flags
     bool ExitFlag = false;
+    bool isConnectionThreaded = false;
     int CameraMode = 0;
-    bool Inputs[4];
 
-    // Sruff for networks
-    ip::tcp::endpoint ep(ip::address::from_string("127.0.0.1"), 38001); // "192.168.1.8"
-    ip::tcp::socket sock(service);
-    std::string message; // Here would lie the last message
-    std::string toSend;
-    bool isMessageNew = false;
-    bool isHost = true;
+    // Message buffer for sync
+    std::string syncMessages;
+    bool newMessage = false;
 
     std::string ip;
     int port;
     bool created_ep = false;
     bool got_ip = false;
-    bool got_map = false;
+
 
     // Main game cycle
     while (!(ExitFlag || (WindowShouldClose() && !IsKeyDown(KEY_ESCAPE))))
     {
-        isHost = CameraMode; // Easier to debug
         UpdateMusicStream(music);
         switch (CurrentScreen) {
 
@@ -193,7 +169,7 @@ int main()
             break;
 
         case Network:
-
+            
             if (BackButton.IsPressed()) {
                 CurrentScreen = StartMenu;
             }
@@ -201,25 +177,9 @@ int main()
                 CurrentScreen = SingleMode;
             }
             else if (HostButton.IsPressed()) {
-
-
-                if (isHost) {
-                    waitForConnectionAsServer(sock);
-                    writeMessage(Map.toString(), sock);
-                    std::cout << Map.toString();
-                }
-                else { // If client try getting connection with host
-                    connectAsClient(ep, sock);
-                }
-
-                // Start playing music
-                PlayMusicStream(music);
-                SetMusicVolume(music, 0.0);
-				CurrentScreen = SingleMode;
+                CurrentScreen = SingleMode;
             }
             else if (ConnectButton.IsPressed()) {
-                isHost = false;
-
                 ip = IP.GetIp();
                 port = IP.GetPort();
                 got_ip = true;
@@ -262,81 +222,31 @@ int main()
             break;
 
             // Actual game window
-
         case SingleMode:
-            readMessage(sock, message, isMessageNew);
-
 
             // Syncronaizing area
-            if (isHost) { // If Server
-                for (bool& inp : Inputs)  inp = false; // Nullify inputs
-
-                // Handle input messages
-                if (isMessageNew) {
-                    isMessageNew = false;
-                    if (message.find("f") != message.npos) {
-                        p1.Shoot(true);
-                    }
-                    if (message.find("w") != message.npos) {
-                        Inputs[0] = true;
-                    }
-                    if (message.find("s") != message.npos) {
-                        Inputs[1] = true;
-                    }
-                    if (message.find("d") != message.npos) {
-                        Inputs[2] = true;
-                    }
-                    if (message.find("a") != message.npos) {
-                        Inputs[3] = true;
-                    }
-                    p1.MovePlayer(Inputs);
+            if (CameraMode) { // If Server
+                // if we are the server, then will ask to thread connection
+                if (!isConnectionThreaded) {
+                    isConnectionThreaded = true;
+                    std::thread server(handle_connections, std::ref(syncMessages), std::ref(newMessage));
+                    server.detach();
                 }
-
-                // Send the whole state_of_the_game to client
-                toSend = p1.toString();
-                toSend += boost::lexical_cast<std::string>(UltimateBulletVector.size()) + ";";
-                for (Bullet& b : UltimateBulletVector) toSend += b.toString();
-                writeMessage(toSend, sock);
+                // If new message arrived, then work with it
+                if (newMessage) {
+                    newMessage = false;
+                    p1.Shoot(true);
+                }
+            }
+            else { // If Client
+                if (IsKeyPressed(KEY_M)) {
+                    send_message("Now in game and with M");
+                }
             }
 
-            else { // If Client
-
-                // handle incoming message
-                if (isMessageNew) {
-                    isMessageNew = false;
-                    if (!got_map) {
-                        Map.setMapFromString(message);
-                        got_map = true;
-                    }
-                    else {
-                        // let's recollect all data:
-                        std::cout << "Angle: " << parseMessage(message) << "\n";
-                        std::cout << "Player position (x, y): (" << parseMessage(message) << ", " << parseMessage(message) << ")\n";
-                        int numberOfBullets = parseMessage(message);
-                        for (int i = 0; i < numberOfBullets; i++) {
-                            std::cout << "Bullet position (x, y): (" << parseMessage(message) << ", " << parseMessage(message) << ")\n";
-                        }
-                    }
-                }
-
-                // send inputs
-                toSend = "";
-                if (IsKeyDown(KEY_UP)) {
-                    toSend += "w";
-                }
-                if (IsKeyDown(KEY_DOWN)) {
-                    toSend += "s";
-                }
-                if (IsKeyDown(KEY_RIGHT)) {
-                    toSend += "d";
-                }
-                if (IsKeyDown(KEY_LEFT)) {
-                    toSend += "a";
-                }
-                if (IsKeyDown(KEY_SPACE)) {
-                    toSend += "f";
-                }
-                writeMessage(toSend, sock);
+            // Player respawn (for debug purposes)
+            if (IsKeyPressed(KEY_R)) {
+                p1 = Player(StdPlayerSize, RealCenter + Vector2{ (int)0.3 * cellWidth, (int)0.3 * cellHeight }, StdPlayerVelocity);
             }
 
 
@@ -365,11 +275,6 @@ int main()
 
             // Shooting
             p1.Shoot();
-			
-			// Player respawn (for debug purposes)
-            if (IsKeyPressed(KEY_R)) {
-                p1 = Player(StdPlayerSize, RealCenter + Vector2{ (int)0.3 * cellWidth, (int)0.3 * cellHeight }, StdPlayerVelocity);
-            }
 
 
             // Here begins drawing
@@ -380,12 +285,10 @@ int main()
             if (CameraMode == 0) {
                 Map.Draw();
             }
-            else if (CameraMode == 1) {/*
-                                for (Rectangle r : Map.getNeighbourhoodRect(p1.PlayerPosition)) {
+            else if (CameraMode == 1) {
+                for (Rectangle r : Map.getNeighbourhoodRect(p1.PlayerPosition)) {
                     DrawRectangleRec(r, BLACK);
                 }
-                */
-                Map.Draw();
             }
 
             p1.DrawPlayer();
@@ -412,7 +315,6 @@ int main()
 
 
         case TestRoom:
-            CurrentScreen = Settings;
             break;
             // For now using CameraMode to diffirintiate server/client
             /*
@@ -428,7 +330,7 @@ int main()
 
     UnloadMusicStream(music);   // Unload music stream buffers from RAM
 
-    unloadAllSounds();
+    // Should also unload sounds
 
     CloseAudioDevice();
 
