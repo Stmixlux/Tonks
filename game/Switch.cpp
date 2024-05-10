@@ -25,6 +25,20 @@ void Switch::UpdateSwitch()
 	}
 }
 
+void Switch::ChangeState()
+{
+	if (state == 0) {
+		state = 1;
+		text = "ON";
+		color = GREEN;
+	}
+	else {
+		state = 0;
+		text = "OFF";
+		color = RED;
+	}
+}
+
 int Switch::GetState() {
 	return state;
 }

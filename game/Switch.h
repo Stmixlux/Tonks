@@ -15,5 +15,6 @@ public:
     };
     void DrawSwitch();
     void UpdateSwitch();
+    void ChangeState();
     int GetState();
 };

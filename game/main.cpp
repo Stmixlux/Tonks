@@ -36,7 +36,7 @@ io_service service;
 std::deque<Bullet> UltimateBulletVector;
 Sound soundBoard[100];
 
-typedef enum GameScreen { StartMenu = 0, Network, SingleMode, HostMode, ClientMode, Settings, Exit, TestRoom };
+typedef enum GameScreen { StartMenu = 0, Network, SingleMode, HostMode, ClientMode, Settings, Exit, TestRoom, DeathScreen };
 
 /* TODO:
     Implement collision for tank  --- IN PROGRESS
@@ -65,14 +65,15 @@ void waitForConnectionAsServer(ip::tcp::socket& sock) {
     std::cout << "Connection secured\n";
 }
 
-void connectAsClient(ip::tcp::endpoint& ep, ip::tcp::socket& sock) {
-    while (true) {
+void connectAsClient(ip::tcp::endpoint& ep, ip::tcp::socket& sock, bool& sucess) {
+    for (int _ = 0; _ < 5; _++) {
         try {
             sock.connect(ep);
+            sucess = true;
             break;
         }
         catch (boost::system::system_error& err) {
-            std::cout << "Something went wrong: " << err.what() << std::endl;
+            std::cout << "Couldn't connect to server " << err.what() << std::endl;
         }
     }
 }
@@ -139,10 +140,15 @@ int main()
     Button ConnectButton{ RealCenter - Vector2{0, 25},  Vector2{200, 60}, "Connect", 30, GRAY };
     InputTextWindow IP{ RealCenter + Vector2{0, 50},  Vector2{350, 60}, "IP and port: ", 30 };
 
+    // Death Screen Button
+    Switch RematchButton{ RealCenter + Vector2{-100, 180},  Vector2{100, 60}, "Rematch", 40};
+    Button MenuButton{ RealCenter + Vector2{200, 180},  Vector2{200, 60}, "Menu", 30, GRAY };
+
     // Some flags
     bool ExitFlag = false;
     int CameraMode = 0;
     bool Inputs[4];
+    int whoWon = 0;
 
     // Stuff for networks
     ip::tcp::endpoint ep(ip::address::from_string("127.0.0.1"), 38001); // "192.168.1.8"
@@ -150,14 +156,21 @@ int main()
     std::string message; // Here would lie the last message
     std::string toSend;
     bool isMessageNew = false;
+    bool isHost = false;
 
     std::string ip;
     int port;
-    bool got_map = false;
+    bool gotMap = false;
+    bool isConnected = false;
 
     // For client drawing
     double x1=0, y1=0, angle1=0, x2=0, y2=0, angle2=0;
+    int numberOfBullets = 0; // deeply important
+    int sense = 0;
     std::vector<Vector2> bullets;
+
+    // For DeathScreen restarts
+    bool otherReady = false, weReady = false;
 
     // Main game cycle
     while (!(ExitFlag || (WindowShouldClose() && !IsKeyDown(KEY_ESCAPE))))
@@ -191,7 +204,7 @@ int main()
             SettingsButton.DrawButton();
 
             // Calibrating pink circle in the center
-            //DrawCircle((screenWidth - screenWidth / XCellCount) / 2, (screenHeight - screenHeight / YCellCount) / 2, 4, PINK);
+            // DrawCircle((screenWidth - screenWidth / XCellCount) / 2, (screenHeight - screenHeight / YCellCount) / 2, 4, PINK);
 
             EndDrawing();
             break;
@@ -208,8 +221,10 @@ int main()
             }
             else if (HostButton.IsPressed()) {
 
+                isHost = true;
                 waitForConnectionAsServer(sock);
-                writeMessage(Map.toString(), sock);
+                isConnected = true;
+                writeMessage("0;" + Map.toString(), sock);
                 
                 // Start playing music
                 PlayMusicStream(music);
@@ -218,14 +233,22 @@ int main()
 				
             }
             else if (ConnectButton.IsPressed()) {
+
+                isHost = false;
                 ip = IP.GetIp();
                 port = IP.GetPort();
                 ip::tcp::endpoint ep(ip::address::from_string(ip), port);
 
-                connectAsClient(ep, sock);
-                PlayMusicStream(music);
-                SetMusicVolume(music, 0.0);
-                CurrentScreen = ClientMode;
+                connectAsClient(ep, sock, isConnected);
+
+                if (isConnected) {
+                    PlayMusicStream(music);
+                    SetMusicVolume(music, 0.0);
+                    CurrentScreen = ClientMode;
+                }
+                else {
+                    std::cout << "Timed out";
+                }
             }
             IP.UpdateState();
             IP.UpdateText();
@@ -267,7 +290,7 @@ int main()
             // Syncronaizing area
             for (bool& inp : Inputs)  inp = false; // Nullify inputs
 
-                // Handle input messages
+            // Handle input messages
             if (isMessageNew) {
                 isMessageNew = false;
                 if (message.find("f") != message.npos) {
@@ -287,9 +310,33 @@ int main()
                 }
                 p2.MovePlayer(Inputs, Map.getNeighbourhoodRect(p2.PlayerPosition));
             }
+
+
             p1.MovePlayer(Map.getNeighbourhoodRect(p1.PlayerPosition));
             p1.Shoot();
             p2.Shoot(false);
+
+            // is Player Dead
+            if (!p1.GetIsAlive() || !p2.GetIsAlive()) {
+                whoWon = p1.GetIsAlive() ? 1 : 2;
+
+                p1 = Player(StdPlayerSize, RealCenter + Vector2{ (int)(XCellCount * 0.3 + 0.3) * cellWidth, (int)(-YCellCount * 0.3 + 0.3) * cellHeight }, StdPlayerVelocity, 1);
+                p2 = Player(StdPlayerSize, RealCenter + Vector2{ (int)(-XCellCount * 0.3 - 0.7) * cellWidth, (int)(YCellCount * 0.3 + 0.3) * cellHeight }, StdPlayerVelocity, 2);
+                UltimateBulletVector.clear();
+
+                CurrentScreen = DeathScreen;
+
+                toSend = "2;";
+                toSend += boost::lexical_cast<std::string>(whoWon) + ";";
+                writeMessage(toSend, sock);
+                break;
+            }
+
+            // Collision player with bullets
+            for (int i = 0; i < UltimateBulletVector.size(); i++) {
+                p1.CollideBullet(UltimateBulletVector[i]);
+                p2.CollideBullet(UltimateBulletVector[i]);
+            }
 
             // Collsion with walls for bullets
             for (int i = 0; i < UltimateBulletVector.size(); i++) {
@@ -323,7 +370,8 @@ int main()
 
 
             // Send the whole state_of_the_game to client
-            toSend = p1.toString();
+            toSend = "1;";
+            toSend += p1.toString();
             toSend += p2.toString();
             toSend += boost::lexical_cast<std::string>(UltimateBulletVector.size()) + ";";
             for (Bullet& b : UltimateBulletVector) toSend += b.toString();
@@ -335,26 +383,32 @@ int main()
             readMessage(sock, message, isMessageNew);
             if (isMessageNew) {
                 isMessageNew = false;
-                if (!got_map) {
-                    Map.setMapFromString(message);
-                    got_map = true;
-                    break;
-                }
-                else {
-                    // let's recollect all data:
-                    x1 = parseMessage(message);
-                    y1 = parseMessage(message);
-                    angle1 = parseMessage(message);
-                    x2 = parseMessage(message);
-                    y2 = parseMessage(message);
-                    angle2 = parseMessage(message);
+                int sense = (int)parseMessage(message);
+                switch (sense) {
+                    case 0: // they send us new map
+                        Map.setMapFromString(message);
+                        break;
+                    case 1: // all positions
+
+                        // let's recollect all data:
+                        x1 = parseMessage(message);
+                        y1 = parseMessage(message);
+                        angle1 = parseMessage(message);
+                        x2 = parseMessage(message);
+                        y2 = parseMessage(message);
+                        angle2 = parseMessage(message);
 
 
-                    int numberOfBullets = parseMessage(message);
-                    bullets.clear();
-                    for (int i = 0; i < numberOfBullets; i++) {
-                        bullets.push_back(Vector2{ (float)parseMessage(message) , (float)parseMessage(message) });
-                    }
+                        numberOfBullets = parseMessage(message);
+                        bullets.clear();
+                        for (int i = 0; i < numberOfBullets; i++) {
+                            bullets.push_back(Vector2{ (float)parseMessage(message) , (float)parseMessage(message) });
+                        }
+                        break;
+                    case 2: // Someone died
+                        whoWon = parseMessage(message);
+                        CurrentScreen = DeathScreen;
+                        break;
                 }
             }
             BeginDrawing();
@@ -387,9 +441,8 @@ int main()
                 toSend += "f";
             }
             writeMessage(toSend, sock);
-            
-
             break;
+
         case SingleMode:
 
             if (IsKeyPressed(KEY_ESCAPE)) {
@@ -450,8 +503,9 @@ int main()
             if (CameraMode == 0) {
                 Map.Draw();
             }
-            else if (CameraMode == 1) {/*
-                    for (Rectangle r : Map.getNeighbourhoodRect(p1.PlayerPosition)) {
+            else if (CameraMode == 1) {
+                /*
+                for (Rectangle r : Map.getNeighbourhoodRect(p1.PlayerPosition)) {
                     DrawRectangleRec(r, BLACK);
                 }
                 */
@@ -473,7 +527,71 @@ int main()
             EndDrawing();
             break;
 
-            // Case for exit
+        case DeathScreen:
+            readMessage(sock, message, isMessageNew);
+
+            // Handle incoming message
+            if (isMessageNew) {
+                isMessageNew = false;
+                if (message.find("r") != message.npos) {
+                    otherReady = true;
+                }
+                if (message.find("b") != message.npos) {
+                    CurrentScreen = StartMenu;
+                    sock.close();
+                }
+            }
+
+            // Handle interface
+            if (MenuButton.IsPressed()) {
+                toSend = "3;b";
+                writeMessage(toSend, sock);
+                CurrentScreen = StartMenu;
+                sock.close();
+                break;
+            }
+            if (RematchButton.IsPressed()) {
+                toSend = "3;r";
+                writeMessage(toSend, sock);
+            }
+
+            if (!weReady) {
+                RematchButton.UpdateSwitch();
+                weReady = RematchButton.GetState();
+            }
+
+            if (weReady && otherReady) {
+                if (isHost) {
+                    Map.regenerateMap();
+                    writeMessage("0;" + Map.toString(), sock);
+                }
+                CurrentScreen = isHost ? HostMode : ClientMode;
+                weReady = false;
+                otherReady = false;
+                RematchButton.ChangeState();
+
+                break;
+            }
+
+            // Draw
+            BeginDrawing();
+            ClearBackground(RAYWHITE);
+
+            DrawText("GAME OVER", RealCenter.x - MeasureText("GAME OVER", 70) / 2, RealCenter.y - 70 / 2 - 100, 70, BLACK);
+            if (whoWon == 1) {
+                DrawText("RED", RealCenter.x - MeasureText("RED", 70) / 2, RealCenter.y - 70 / 2, 70, RED);
+            }
+            else{
+                DrawText("BLUE", RealCenter.x - MeasureText("BLUE", 70) / 2, RealCenter.y - 70 / 2, 70, BLUE);
+            }
+            DrawText("WON", RealCenter.x - MeasureText("WON", 70) / 2, RealCenter.y - 70 / 2 + 100, 70, BLACK);
+
+            RematchButton.DrawSwitch();
+            MenuButton.DrawButton();
+            EndDrawing();
+            break;
+
+        // Case for exit
         case Exit:
             ExitFlag = true;
             break;
