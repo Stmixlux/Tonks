@@ -286,7 +286,7 @@ int main()
                     if (message.find("a") != message.npos) {
                         Inputs[3] = true;
                     }
-                    p1.MovePlayer(Inputs);
+                    p1.MovePlayer(Inputs, Map.getNeighbourhoodRect(p1.PlayerPosition));
                 }
 
                 // Send the whole state_of_the_game to client
@@ -336,56 +336,18 @@ int main()
                 writeMessage(toSend, sock);
             }
 
-            else { // If Client
-
-                // handle incoming message
-                if (isMessageNew) {
-                    isMessageNew = false;
-                    if (!got_map) {
-                        Map.setMapFromString(message);
-                        got_map = true;
-                    }
-                    else {
-                        // let's recollect all data:
-                        std::cout << "Angle: " << parseMessage(message) << "\n";
-                        std::cout << "Player position (x, y): (" << parseMessage(message) << ", " << parseMessage(message) << ")\n";
-                        int numberOfBullets = parseMessage(message);
-                        for (int i = 0; i < numberOfBullets; i++) {
-                            std::cout << "Bullet position (x, y): (" << parseMessage(message) << ", " << parseMessage(message) << ")\n";
-                        }
-                    }
-                }
-
-                // send inputs
-                toSend = "";
-                if (IsKeyDown(KEY_UP)) {
-                    toSend += "w";
-                }
-                if (IsKeyDown(KEY_DOWN)) {
-                    toSend += "s";
-                }
-                if (IsKeyDown(KEY_RIGHT)) {
-                    toSend += "d";
-                }
-                if (IsKeyDown(KEY_LEFT)) {
-                    toSend += "a";
-                }
-                if (IsKeyDown(KEY_SPACE)) {
-                    toSend += "f";
-                }
-                writeMessage(toSend, sock);
-            }
 
             // Player moving
-            p1.MovePlayer();
+            p1.MovePlayer(Map.getNeighbourhoodRect(p1.PlayerPosition));
 
-            // Collision with walls for player
+            // Collision with walls for player (old)
+            /*
             for (Rectangle wall : Map.getNeighbourhoodRect(p1.PlayerPosition)) {
                 if(p1.CheckCollisionWall(wall)) std::cout << "COLLISION" << std::endl;
                 p1.CollideWall(wall);
                 std::cout << "check" << std::endl;
             }
-
+            */
 
             // Collsion with walls for bullets
             for (int i = 0; i < UltimateBulletVector.size(); i++) {

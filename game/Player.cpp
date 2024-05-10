@@ -22,7 +22,7 @@ void Player::UpdatePoints()
     PlayerPoints[3] = PlayerPosition + Vector2{ -0.5f * PlayerSize.x, 0.5f * PlayerSize.y };
 }
 
-void Player::MovePlayer(bool inputs[4])
+void Player::MovePlayer(bool inputs[4], std::vector<Rectangle>& walls)
 {
     IsMovingStraight = false;
     IsRotating = false;
@@ -51,23 +51,19 @@ void Player::MovePlayer(bool inputs[4])
     }
     PlayerRect = { PlayerPosition.x, PlayerPosition.y, PlayerSize.x, PlayerSize.y };
     UpdatePoints();
+
+    for (Rectangle wall : walls) {
+        CollideWall(wall);
+    }
+
 }
 
-void Player::MovePlayer()
+void Player::MovePlayer(std::vector<Rectangle>& walls)
 {
     bool inp[4]{ false, false, false, false };
-    MovePlayer(inp);
+    MovePlayer(inp, walls);
 }
 
-void Player::DrawPlayer()
-{
-    DrawRectanglePro(PlayerRect, Vector2{ (float)(PlayerSize.x / 2) , (float)(PlayerSize.y / 2) }, PlayerAngle * 180 / PI, RED);
-    DrawLineEx(PlayerPosition, PlayerPosition + (PlayerVelocity * 10), 3, BLACK);
-    DrawCircleV(PlayerPosition, 10, DARKRED);
-    for (Vector2 point : PlayerPoints) {
-        DrawCircleV(GetRotatedVector(PlayerPosition, point, PlayerAngle), 3, BLACK);
-    }
-}
 
 bool Player::CheckCollisionWall(Rectangle rect) {
 
@@ -177,6 +173,16 @@ void Player::Shoot(bool isShooting)
         AvailableShots -= 1;
         ReloadTime = StdReloadTime;
         PlaySound(soundBoard[SoundPlayerShoot]);
+    }
+}
+
+void Player::DrawPlayer()
+{
+    DrawRectanglePro(PlayerRect, Vector2{ (float)(PlayerSize.x / 2) , (float)(PlayerSize.y / 2) }, PlayerAngle * 180 / PI, RED);
+    DrawLineEx(PlayerPosition, PlayerPosition + (PlayerVelocity * 10), 3, BLACK);
+    DrawCircleV(PlayerPosition, 10, DARKRED);
+    for (Vector2 point : PlayerPoints) {
+        DrawCircleV(GetRotatedVector(PlayerPosition, point, PlayerAngle), 3, BLACK);
     }
 }
 

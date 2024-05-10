@@ -25,8 +25,8 @@ namespace player {
 		int ReloadTime = 0;
 
 		Player(Vector2 PS, Vector2 PP, Vector2 PV);
-		void MovePlayer();
-		void MovePlayer(bool inputs[4]);
+		void MovePlayer(std::vector<Rectangle>& v);
+		void MovePlayer(bool inputs[4], std::vector<Rectangle>& v);
 		void DrawPlayer();
 		void UpdatePoints();
 		bool CheckCollisionWall(Rectangle);
