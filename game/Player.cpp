@@ -2,16 +2,30 @@
 #include "UsefulStuff.h"
 
 using namespace player;
-Player::Player(Vector2 PS, Vector2 PP, Vector2 PV)
+Player::Player(Vector2 PS, Vector2 PP, Vector2 PV, int ID)
 {
     PlayerSize = PS;
     PlayerPosition = PP;
     PlayerVelocity = PV;
+    PlayerID = ID;
+    if (ID == 1) {
+        PlayerColor = RED;
+        TurretColor = DARKRED;
+    }
+    else if (ID == 2) {
+        PlayerColor = BLUE;
+        TurretColor = DARKBLUE;
+    }
+    
     PlayerRect = { PlayerPosition.x, PlayerPosition.y, PlayerSize.x, PlayerSize.y };
     PlayerPoints.push_back(PlayerPosition + Vector2{ -0.5f * PlayerSize.x, -0.5f * PlayerSize.y });
     PlayerPoints.push_back(PlayerPosition + Vector2{ 0.5f * PlayerSize.x, -0.5f * PlayerSize.y });
     PlayerPoints.push_back(PlayerPosition + Vector2{ 0.5f * PlayerSize.x, 0.5f * PlayerSize.y });
     PlayerPoints.push_back(PlayerPosition + Vector2{ -0.5f * PlayerSize.x, 0.5f * PlayerSize.y });
+}
+
+Player::Player()
+{
 }
 
 void Player::UpdatePoints()
@@ -28,22 +42,22 @@ void Player::MovePlayer(bool inputs[4], std::vector<Rectangle>& walls)
     IsRotating = false;
     RotationDirection = 1;
     MovingDirection = 1;
-    if (IsKeyDown(KEY_UP) || inputs[0]) {
+    if (inputs[0]) {
         PlayerPosition += PlayerVelocity;
         IsMovingStraight = true;
     }
-    if (IsKeyDown(KEY_DOWN) || inputs[1]) {
+    if (inputs[1]) {
         MovingDirection = -1;
         PlayerPosition -= PlayerVelocity;
         RotationDirection = -1;
         IsMovingStraight = true;
     }
-    if (IsKeyDown(KEY_RIGHT) || inputs[2]) {
+    if (inputs[2]) {
         PlayerAngle += RotationSpeed * RotationDirection;
         RotateVector2(Vector2{}, PlayerVelocity, RotationSpeed * RotationDirection);
         IsRotating = true;
     }
-    if (IsKeyDown(KEY_LEFT) || inputs[3]) {
+    if (inputs[3]) {
         RotationDirection *= -1;
         PlayerAngle += RotationSpeed * RotationDirection;
         RotateVector2(Vector2{}, PlayerVelocity, RotationSpeed * RotationDirection);
@@ -60,7 +74,7 @@ void Player::MovePlayer(bool inputs[4], std::vector<Rectangle>& walls)
 
 void Player::MovePlayer(std::vector<Rectangle>& walls)
 {
-    bool inp[4]{ false, false, false, false };
+    bool inp[4]{ IsKeyDown(KEY_UP), IsKeyDown(KEY_DOWN), IsKeyDown(KEY_RIGHT), IsKeyDown(KEY_LEFT) };
     MovePlayer(inp, walls);
 }
 
@@ -178,16 +192,18 @@ void Player::Shoot(bool isShooting)
 
 void Player::DrawPlayer()
 {
-    DrawRectanglePro(PlayerRect, Vector2{ (float)(PlayerSize.x / 2) , (float)(PlayerSize.y / 2) }, PlayerAngle * 180 / PI, RED);
+    DrawRectanglePro(PlayerRect, Vector2{ (float)(PlayerSize.x / 2) , (float)(PlayerSize.y / 2) }, PlayerAngle * 180 / PI, PlayerColor);
     DrawLineEx(PlayerPosition, PlayerPosition + (PlayerVelocity * 10), 3, BLACK);
-    DrawCircleV(PlayerPosition, 10, DARKRED);
+    DrawCircleV(PlayerPosition, 10, TurretColor);
+    /*
     for (Vector2 point : PlayerPoints) {
         DrawCircleV(GetRotatedVector(PlayerPosition, point, PlayerAngle), 3, BLACK);
     }
+    */
 }
 
 std::string player::Player::toString()
 {
-    std::string res = boost::lexical_cast<std::string>(PlayerAngle) + ";" + boost::lexical_cast<std::string>(PlayerPosition.x) + ";" + boost::lexical_cast<std::string>(PlayerPosition.y) + ";";
+    std::string res = boost::lexical_cast<std::string>(PlayerPosition.x) + ";" + boost::lexical_cast<std::string>(PlayerPosition.y) + ";" + boost::lexical_cast<std::string>(PlayerAngle) + ";";
     return res;
 }

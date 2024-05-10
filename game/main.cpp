@@ -36,7 +36,7 @@ io_service service;
 std::deque<Bullet> UltimateBulletVector;
 Sound soundBoard[100];
 
-typedef enum GameScreen { StartMenu = 0, Network, SingleMode, Settings, Exit, TestRoom };
+typedef enum GameScreen { StartMenu = 0, Network, SingleMode, HostMode, ClientMode, Settings, Exit, TestRoom };
 
 /* TODO:
     Implement collision for tank  --- IN PROGRESS
@@ -116,8 +116,9 @@ int main()
 
     Vector2 RealCenter{ (screenWidth - screenWidth / XCellCount) / 2, (screenHeight - screenHeight / YCellCount) / 2 };
 
-    Player p1(StdPlayerSize, RealCenter + Vector2{ (int)(XCellCount * 0.3 + 0.3) * cellWidth, (int)(-YCellCount * 0.3 + 0.3) * cellHeight }, StdPlayerVelocity);
-
+    //Player p1(StdPlayerSize, RealCenter + Vector2{ (int)(XCellCount * 0.3 + 0.3) * cellWidth, (int)(-YCellCount * 0.3 + 0.3) * cellHeight }, StdPlayerVelocity);
+    Player p1(StdPlayerSize, RealCenter + Vector2{ (int)(XCellCount * 0.3 + 0.3) * cellWidth, (int)(-YCellCount * 0.3 + 0.3) * cellHeight }, StdPlayerVelocity, 1);
+    Player p2(StdPlayerSize, RealCenter + Vector2{ (int)(-XCellCount * 0.3 - 0.7) * cellWidth, (int)(YCellCount * 0.3 + 0.3) * cellHeight }, StdPlayerVelocity, 2);
 
     // Buttons
     // Start menu
@@ -140,24 +141,24 @@ int main()
     int CameraMode = 0;
     bool Inputs[4];
 
-    // Sruff for networks
+    // Stuff for networks
     ip::tcp::endpoint ep(ip::address::from_string("127.0.0.1"), 38001); // "192.168.1.8"
     ip::tcp::socket sock(service);
     std::string message; // Here would lie the last message
     std::string toSend;
     bool isMessageNew = false;
-    bool isHost = true;
 
     std::string ip;
     int port;
-    bool created_ep = false;
-    bool got_ip = false;
     bool got_map = false;
+
+    // For client drawing
+    double x1=0, y1=0, angle1=0, x2=0, y2=0, angle2=0;
+    std::vector<Vector2> bullets;
 
     // Main game cycle
     while (!(ExitFlag || (WindowShouldClose() && !IsKeyDown(KEY_ESCAPE))))
     {
-        isHost = CameraMode; // Easier to debug
         UpdateMusicStream(music);
         switch (CurrentScreen) {
 
@@ -199,33 +200,29 @@ int main()
             }
             else if (Single.IsPressed()) {
                 CurrentScreen = SingleMode;
+                PlayMusicStream(music);
+                SetMusicVolume(music, 0.0);
             }
             else if (HostButton.IsPressed()) {
-                if (isHost) {
-                    waitForConnectionAsServer(sock);
-                    writeMessage(Map.toString(), sock);
-                    std::cout << Map.toString();
-                }
-                else { // If client try getting connection with host
-                    connectAsClient(ep, sock);
-                }
 
+                waitForConnectionAsServer(sock);
+                writeMessage(Map.toString(), sock);
+                
                 // Start playing music
                 PlayMusicStream(music);
                 SetMusicVolume(music, 0.0);
-				CurrentScreen = SingleMode;
+				CurrentScreen = HostMode;
 				
             }
             else if (ConnectButton.IsPressed()) {
-                isHost = false;
-
                 ip = IP.GetIp();
                 port = IP.GetPort();
-                got_ip = true;
-            }
-            if (!created_ep && got_ip) {
                 ip::tcp::endpoint ep(ip::address::from_string(ip), port);
-                created_ep = true;
+
+                connectAsClient(ep, sock);
+                PlayMusicStream(music);
+                SetMusicVolume(music, 0.0);
+                CurrentScreen = ClientMode;
             }
             IP.UpdateState();
             IP.UpdateText();
@@ -261,82 +258,135 @@ int main()
             break;
 
         // Actual game window
-        case SingleMode:
+        case HostMode:
             readMessage(sock, message, isMessageNew);
 
             // Syncronaizing area
-            if (isHost) { // If Server
-                for (bool& inp : Inputs)  inp = false; // Nullify inputs
+            for (bool& inp : Inputs)  inp = false; // Nullify inputs
 
                 // Handle input messages
-                if (isMessageNew) {
-                    isMessageNew = false;
-                    if (message.find("f") != message.npos) {
-                        p1.Shoot(true);
-                    }
-                    if (message.find("w") != message.npos) {
-                        Inputs[0] = true;
-                    }
-                    if (message.find("s") != message.npos) {
-                        Inputs[1] = true;
-                    }
-                    if (message.find("d") != message.npos) {
-                        Inputs[2] = true;
-                    }
-                    if (message.find("a") != message.npos) {
-                        Inputs[3] = true;
-                    }
-                    p1.MovePlayer(Inputs, Map.getNeighbourhoodRect(p1.PlayerPosition));
+            if (isMessageNew) {
+                isMessageNew = false;
+                if (message.find("f") != message.npos) {
+                    p2.Shoot(true);
                 }
+                if (message.find("w") != message.npos) {
+                    Inputs[0] = true;
+                }
+                if (message.find("s") != message.npos) {
+                    Inputs[1] = true;
+                }
+                if (message.find("d") != message.npos) {
+                    Inputs[2] = true;
+                }
+                if (message.find("a") != message.npos) {
+                    Inputs[3] = true;
+                }
+                p2.MovePlayer(Inputs, Map.getNeighbourhoodRect(p2.PlayerPosition));
+            }
+            p1.MovePlayer(Map.getNeighbourhoodRect(p1.PlayerPosition));
+            p1.Shoot();
 
-                // Send the whole state_of_the_game to client
-                toSend = p1.toString();
-                toSend += boost::lexical_cast<std::string>(UltimateBulletVector.size()) + ";";
-                for (Bullet& b : UltimateBulletVector) toSend += b.toString();
-                writeMessage(toSend, sock);
+            // Collsion with walls for bullets
+            for (int i = 0; i < UltimateBulletVector.size(); i++) {
+                for (Rectangle rect : Map.getNeighbourhoodRect(UltimateBulletVector[i].Position)) {
+                    UltimateBulletVector[i].Collide(rect);
+                }
             }
 
-            else { // If Client
-
-                // handle incoming message
-                if (isMessageNew) {
-                    isMessageNew = false;
-                    if (!got_map) {
-                        Map.setMapFromString(message);
-                        got_map = true;
-                    }
-                    else {
-                        // let's recollect all data:
-                        std::cout << "Angle: " << parseMessage(message) << "\n";
-                        std::cout << "Player position (x, y): (" << parseMessage(message) << ", " << parseMessage(message) << ")\n";
-                        int numberOfBullets = parseMessage(message);
-                        for (int i = 0; i < numberOfBullets; i++) {
-                            std::cout << "Bullet position (x, y): (" << parseMessage(message) << ", " << parseMessage(message) << ")\n";
-                        }
-                    }
-                }
-
-                // send inputs
-                toSend = "";
-                if (IsKeyDown(KEY_UP)) {
-                    toSend += "w";
-                }
-                if (IsKeyDown(KEY_DOWN)) {
-                    toSend += "s";
-                }
-                if (IsKeyDown(KEY_RIGHT)) {
-                    toSend += "d";
-                }
-                if (IsKeyDown(KEY_LEFT)) {
-                    toSend += "a";
-                }
-                if (IsKeyDown(KEY_SPACE)) {
-                    toSend += "f";
-                }
-                writeMessage(toSend, sock);
+            // Moving for bullets
+            for (int i = 0; i < UltimateBulletVector.size(); i++) {
+                UltimateBulletVector[i].MoveBullet();
             }
 
 
+            // Here begins drawing
+            BeginDrawing();
+            ClearBackground(RAYWHITE);
+
+
+            Map.Draw();
+
+            p1.DrawPlayer();
+            p2.DrawPlayer();
+
+
+            // Bullet drawer
+            for (int i = 0; i < UltimateBulletVector.size(); i++) {
+                UltimateBulletVector[i].DrawBullet();
+            }
+            EndDrawing();
+
+
+            // Send the whole state_of_the_game to client
+            toSend = p1.toString();
+            toSend += p2.toString();
+            toSend += boost::lexical_cast<std::string>(UltimateBulletVector.size()) + ";";
+            for (Bullet& b : UltimateBulletVector) toSend += b.toString();
+            writeMessage(toSend, sock);                
+            break;
+
+        case ClientMode:
+
+            readMessage(sock, message, isMessageNew);
+            if (isMessageNew) {
+                isMessageNew = false;
+                if (!got_map) {
+                    Map.setMapFromString(message);
+                    got_map = true;
+                    break;
+                }
+                else {
+                    // let's recollect all data:
+                    x1 = parseMessage(message);
+                    y1 = parseMessage(message);
+                    angle1 = parseMessage(message);
+                    x2 = parseMessage(message);
+                    y2 = parseMessage(message);
+                    angle2 = parseMessage(message);
+
+
+                    int numberOfBullets = parseMessage(message);
+                    bullets.clear();
+                    for (int i = 0; i < numberOfBullets; i++) {
+                        bullets.push_back(Vector2{ (float)parseMessage(message) , (float)parseMessage(message) });
+                    }
+                }
+            }
+            BeginDrawing();
+            ClearBackground(RAYWHITE);
+            Map.Draw();
+
+            DrawPlayerClient(x1, y1, angle1, 1);
+            DrawPlayerClient(x2, y2, angle2, 2);
+
+            for (Vector2& shot : bullets) {
+                DrawCircleV(shot, StdBulletRadius, BLACK);
+            }
+            EndDrawing();
+
+            // send inputs
+            toSend = "";
+            if (IsKeyDown(KEY_UP)) {
+                toSend += "w";
+            }
+            if (IsKeyDown(KEY_DOWN)) {
+                toSend += "s";
+            }
+            if (IsKeyDown(KEY_RIGHT)) {
+                toSend += "d";
+            }
+            if (IsKeyDown(KEY_LEFT)) {
+                toSend += "a";
+            }
+            if (IsKeyDown(KEY_SPACE)) {
+                toSend += "f";
+            }
+            writeMessage(toSend, sock);
+            
+
+            break;
+        case SingleMode:
             // Player moving
             p1.MovePlayer(Map.getNeighbourhoodRect(p1.PlayerPosition));
 
@@ -366,7 +416,7 @@ int main()
 			
 			// Player respawn (for debug purposes)
             if (IsKeyPressed(KEY_R)) {
-                p1 = Player(StdPlayerSize, RealCenter + Vector2{ (int)0.3 * cellWidth, (int)0.3 * cellHeight }, StdPlayerVelocity);
+                p1 = Player(StdPlayerSize, RealCenter + Vector2{ (int)0.3 * cellWidth, (int)0.3 * cellHeight }, StdPlayerVelocity, 1);
             }
 
 
@@ -379,17 +429,15 @@ int main()
                 Map.Draw();
             }
             else if (CameraMode == 1) {/*
-                                for (Rectangle r : Map.getNeighbourhoodRect(p1.PlayerPosition)) {
+                    for (Rectangle r : Map.getNeighbourhoodRect(p1.PlayerPosition)) {
                     DrawRectangleRec(r, BLACK);
                 }
                 */
                 Map.Draw();
             }
 
-            p1.DrawPlayer();
-
-            // Calibrating pink circle in the center
-            DrawCircle((screenWidth - screenWidth / XCellCount) / 2, (screenHeight - screenHeight / YCellCount) / 2, 4, PINK);
+            //p1.DrawPlayer();
+            DrawPlayerClient(p1.PlayerPosition.x, p1.PlayerPosition.y, p1.PlayerAngle, 1);
 
             // Map regenerator
             if (IsKeyDown(KEY_G)) {

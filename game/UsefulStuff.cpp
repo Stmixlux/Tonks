@@ -67,6 +67,30 @@ bool DumbCheck(const Rectangle& rect, const Vector2& v)
 		abs(rect.y - v.y) + abs(rect.y + rect.height - v.y) <= rect.height);;
 }
 
+void DrawPlayerClient(double x, double y, double angle, int ID)
+{
+	Vector2 Position{ (float)x, (float)y };
+	Vector2 Vel = StdPlayerVelocity;
+	Color FirstColor, SecondColor;
+	if (ID == 1) {
+		FirstColor = RED;
+		SecondColor = DARKRED;
+	}
+	else if (ID == 2) {
+		FirstColor = BLUE;
+		SecondColor = DARKBLUE;
+	}
+
+	Rectangle rect{ x, y, StdPlayerSize.x, StdPlayerSize.y };
+
+	DrawRectanglePro(rect, Vector2{ (float)(StdPlayerSize.x / 2) , (float)(StdPlayerSize.y / 2) }, angle * 180 / PI, FirstColor);
+	DrawLineEx(Position, Position + (GetRotatedVector(Vector2{}, Vel, angle) * 10), 3, BLACK);
+	DrawCircleV(Position, 10, SecondColor);
+	/*    DrawRectanglePro(PlayerRect, Vector2{ (float)(PlayerSize.x / 2) , (float)(PlayerSize.y / 2) }, PlayerAngle * 180 / PI, PlayerColor);
+    DrawLineEx(PlayerPosition, PlayerPosition + (PlayerVelocity * 10), 3, BLACK);
+    DrawCircleV(PlayerPosition, 10, TurretColor);*/
+}
+
 void loadAllSounds()
 {
 	soundBoard[SoundBulletBurst] = LoadSound("resources/burst.mp3");

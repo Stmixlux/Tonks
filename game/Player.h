@@ -14,6 +14,9 @@ namespace player {
 		Rectangle PlayerRect;
 		std::vector<Vector2> PlayerPoints;
 		double PlayerAngle = 0;
+		Color PlayerColor;
+		Color TurretColor;
+		int PlayerID;
 
 		bool IsMovingStraight = false;
 		bool IsRotating = false;
@@ -24,7 +27,8 @@ namespace player {
 		int AvailableShots = 5;
 		int ReloadTime = 0;
 
-		Player(Vector2 PS, Vector2 PP, Vector2 PV);
+		Player(Vector2 PS, Vector2 PP, Vector2 PV, int ID);
+		Player();
 		void MovePlayer(std::vector<Rectangle>& v);
 		void MovePlayer(bool inputs[4], std::vector<Rectangle>& v);
 		void DrawPlayer();

@@ -46,8 +46,9 @@ double GetProjection(const Vector2& vector, const Vector2& axis); // Gets you a 
 void RotateVector2(Vector2& cent, Vector2& v, double angle);
 Vector2 GetRotatedVector(Vector2& cent, Vector2& v, double angle);
 
-// Auxiliary functions for collisions
+// Auxiliary functions
 bool DumbCheck(const Rectangle& rect, const Vector2& v);
+void DrawPlayerClient(double x, double y, double angle, int ID);
 
 
 // Global resource Managment
