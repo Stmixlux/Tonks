@@ -2,6 +2,7 @@
 #include "raylib.h"
 #include "Bullet.h"
 #include <vector>
+#include <iostream>
 
 namespace player {
 	class Player
@@ -27,6 +28,7 @@ namespace player {
 		void MovePlayer();
 		void DrawPlayer();
 		void UpdatePoints();
+		bool CheckCollisionWall(Rectangle);
 		void CollideWall(Rectangle);
 		bool CollidePoint(const Vector2&, const Vector2&);
 		void Shoot();

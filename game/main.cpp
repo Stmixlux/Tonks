@@ -34,11 +34,10 @@ ip::tcp::endpoint ep(ip::address::from_string("10.55.130.31"), 38001); // "192.1
 std::deque<Bullet> UltimateBulletVector;
 Sound soundBoard[100];
 
-typedef enum GameScreen { StartMenu = 0, Network, Game, Settings, Exit, TestRoom };
+typedef enum GameScreen { StartMenu = 0, Network, SingleMode, Settings, Exit, TestRoom };
 
 /* TODO:
-    Implement collision for tank (hard :( )
-    Sound of buttons
+    Implement collision for tank  --- IN PROGRESS
 */
 
 using namespace player;
@@ -112,6 +111,7 @@ int main ()
     Switch CameraModeButton{ RealCenter + Vector2{-100, 0},  Vector2{100, 60}, "Fog of war mode", 40};
 
     // Network menu
+    Button Single{ RealCenter - Vector2{0, 175},  Vector2{100, 60}, "Single", 30, GRAY };
     Button HostButton{ RealCenter - Vector2{0, 100},  Vector2{100, 60}, "Host", 30, GRAY };
     Button ConnectButton{ RealCenter - Vector2{0, 25},  Vector2{200, 60}, "Connect", 30, GRAY };
     InputTextWindow IP{ RealCenter + Vector2{0, 50},  Vector2{350, 60}, "IP and port: ", 30 };
@@ -173,8 +173,11 @@ int main ()
             if (BackButton.IsPressed()) {
                 CurrentScreen = StartMenu;
             }
+            else if (Single.IsPressed()) {
+                CurrentScreen = SingleMode;
+            }
             else if (HostButton.IsPressed()) {
-                CurrentScreen = Game;
+                CurrentScreen = SingleMode;
             }
             else if (ConnectButton.IsPressed()) {
                 ip = IP.GetIp();
@@ -193,6 +196,7 @@ int main ()
 
             BeginDrawing();
             ClearBackground(RAYWHITE);
+            Single.DrawButton();
             HostButton.DrawButton();
             ConnectButton.DrawButton();
             BackButton.DrawButton();
@@ -218,7 +222,7 @@ int main ()
             break;
 
             // Actual game window
-        case Game:
+        case SingleMode:
 
             // Syncronaizing area
             if (CameraMode) { // If Server
@@ -240,13 +244,20 @@ int main ()
                 }
             }
 
+            // Player respawn (for debug purposes)
+            if (IsKeyPressed(KEY_R)) {
+                p1 = Player(StdPlayerSize, RealCenter + Vector2{ (int)0.3 * cellWidth, (int)0.3 * cellHeight }, StdPlayerVelocity);
+            }
+
 
             // Player moving
             p1.MovePlayer();
 
             // Collision with walls for player
             for (Rectangle wall : Map.getNeighbourhoodRect(p1.PlayerPosition)) {
+                if(p1.CheckCollisionWall(wall)) std::cout << "COLLISION" << std::endl;
                 p1.CollideWall(wall);
+                std::cout << "check" << std::endl;
             }
 
 

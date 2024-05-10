@@ -28,6 +28,7 @@ void MapGenerator::Draw()
 	for (int i = 0; i < n; i++) {
 		for (int j = 0; j < m; j++) {
 			map[i][j].Draw();
+			
 		}
 	}
 }

@@ -43,6 +43,11 @@ double GetLen(const Vector2& v)
 	return sqrt(pow(v.x, 2) + pow(v.y, 2));
 }
 
+double GetProjection(const Vector2& vector, const Vector2& axis)
+{
+	return (vector.x*axis.x + vector.y*axis.y)/GetLen(axis);
+}
+
 
 void RotateVector2(Vector2& cent, Vector2& v, double angle) {
 	double old_x = v.x;

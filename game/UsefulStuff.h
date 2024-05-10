@@ -40,6 +40,7 @@ double VectorProd(const Vector2& v1, const Vector2& v2);
 double GetDistance(const Vector2& v1, const Vector2& v2);
 double GetAngle2Vectors(const Vector2& v1, const Vector2& v2);
 double GetLen(const Vector2& v);
+double GetProjection(const Vector2& vector, const Vector2& axis); // Gets you a projection of a vector to an axis
 
 void RotateVector2(Vector2& cent, Vector2& v, double angle);
 Vector2 GetRotatedVector(Vector2& cent, Vector2& v, double angle);

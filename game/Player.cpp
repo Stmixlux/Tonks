@@ -58,14 +58,15 @@ void Player::DrawPlayer()
     DrawRectanglePro(PlayerRect, Vector2{ (float)(PlayerSize.x / 2) , (float)(PlayerSize.y / 2) }, PlayerAngle * 180 / PI, RED);
     DrawLineEx(PlayerPosition, PlayerPosition + (PlayerVelocity * 10), 3, BLACK);
     DrawCircleV(PlayerPosition, 10, DARKRED);
-    /*
     for (Vector2 point : PlayerPoints) {
         DrawCircleV(GetRotatedVector(PlayerPosition, point, PlayerAngle), 3, BLACK);
     }
-    */
 }
 
-void Player::CollideWall(Rectangle rect) {
+bool Player::CheckCollisionWall(Rectangle rect) {
+
+    Vector2 x_axis = { 1, 0 };
+    Vector2 y_axis = { 0, 1 };
 
     Vector2 bot_left = { rect.x, rect.y + rect.height };
     Vector2 up_left = { rect.x, rect.y};
@@ -73,52 +74,64 @@ void Player::CollideWall(Rectangle rect) {
     Vector2 bot_right = { rect.x + rect.width, rect.y + rect.height };
 
     std::vector<Vector2> RectVertexes{ bot_left, up_left, up_right, bot_right };
+    std::vector<Vector2> RealPlayerVertexes;
 
-    // Case 2 - the wall is in the tank
-    for (int i = 0; i < 4; i++) {
-        int counter = 0;
-        while (CollidePoint(RectVertexes[i], Vector2{0,0})) {
-            if (counter >= 10)  break;
-            if (IsMovingStraight) {
-                PlayerPosition -= PlayerVelocity * MovingDirection * 0.1;
+    for (int i = 0; i < 4; i++) RealPlayerVertexes.push_back(GetRotatedVector(PlayerPosition, PlayerPoints[i], PlayerAngle));
 
-            }
-            //if (IsRotating) PlayerAngle -= RotationSpeed * RotationDirection * 0.1;
-            counter += 1;
+    std::vector<Vector2> AxisForProjections = { x_axis, y_axis };
+    AxisForProjections.push_back(RealPlayerVertexes[0] - RealPlayerVertexes[1]);
+    AxisForProjections.push_back(RealPlayerVertexes[1] - RealPlayerVertexes[2]);
+    
+    bool IsColliding = true;
+
+    for (Vector2 ax : AxisForProjections) {
+        std::vector<double> PlayerProjections;
+        std::vector<double> WallProjections;
+        for (int i = 0; i < 4; i++) {
+            PlayerProjections.push_back(GetProjection(RealPlayerVertexes[i], ax));
+            WallProjections.push_back(GetProjection(RectVertexes[i], ax));
         }
+        double pl_min, pl_max, w_min, w_max;
+        double tpl_min, tpl_max, tw_min, tw_max;
+        tpl_min = tpl_max = PlayerProjections[0];
+        tw_min = tw_max = WallProjections[0];
+        for (int i = 1; i < 4; i++) {
+            if (PlayerProjections[i] < tpl_min) tpl_min = PlayerProjections[i];
+            if (PlayerProjections[i] > tpl_max) tpl_max = PlayerProjections[i];
+            if (WallProjections[i] < tw_min) tw_min = WallProjections[i];
+            if (WallProjections[i] > tw_max) tw_max = WallProjections[i];
+        }
+        pl_min = tpl_min;
+        pl_max = tpl_max;
+        w_min = tw_min;
+        w_max = tw_max;
+        if (pl_max < w_min || w_max < pl_min) IsColliding = false;
     }
+    if (IsColliding) std::cout << "COLLISION" << std::endl;
+    PlayerRect = { PlayerPosition.x, PlayerPosition.y, PlayerSize.x, PlayerSize.y };
+    UpdatePoints();
+    return IsColliding;
+}
 
-    // Case 1 - the tank is in the wall
-    /*
-    auto DumbCheck = [](const Rectangle& rect, const Vector2& v) {
-        return (abs(rect.x - v.x) + abs(rect.x + rect.width - v.x) <= rect.width &&
-            abs(rect.y - v.y) + abs(rect.y + rect.height - v.y) <= rect.height);
-        };
-    for (int i = 0; i < 4; i++) {
+void Player::CollideWall(Rectangle rect)
+{
+    if (CheckCollisionWall(rect)) {
         int counter = 0;
         if (IsRotating) {
-            while (DumbCheck(rect, GetRotatedVector(PlayerPosition, PlayerPoints[i], PlayerAngle)) && counter < 10) {
-
-                PlayerAngle -= RotationSpeed * RotationDirection;
-                RotateVector2(Vector2{}, PlayerVelocity, -RotationSpeed * RotationDirection);
+            while (CheckCollisionWall(rect) && counter < 10) {
+                PlayerAngle -= RotationSpeed * RotationDirection * 0.1;
+                RotateVector2(Vector2{}, PlayerVelocity, -RotationSpeed * RotationDirection * 0.1);
                 counter += 1;
-
             }
         }
         counter = 0;
         if (IsMovingStraight) {
-            while (DumbCheck(rect, GetRotatedVector(PlayerPosition, PlayerPoints[i] + Vector2{ PlayerVelocity.x, 0}, PlayerAngle)) && counter < 10) {
-                PlayerPosition -= Vector2{ PlayerVelocity.x * MovingDirection * (float)0.1, 0};
-                counter += 1;
-            }
-            counter = 0;
-            while (DumbCheck(rect, GetRotatedVector(PlayerPosition, PlayerPoints[i] + Vector2{0, PlayerVelocity.y }, PlayerAngle)) && counter < 10) {
-                PlayerPosition -= Vector2{0, PlayerVelocity.y * MovingDirection * (float)0.1 };
+            while (CheckCollisionWall(rect) && counter < 10) {
+                PlayerPosition -= PlayerVelocity * MovingDirection * (float)0.1;
                 counter += 1;
             }
         }
     }
-    */
     PlayerRect = { PlayerPosition.x, PlayerPosition.y, PlayerSize.x, PlayerSize.y };
     UpdatePoints();
 }
