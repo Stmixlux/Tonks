@@ -44,6 +44,8 @@ typedef enum GameScreen { StartMenu = 0, Network, SingleMode, HostMode, ClientMo
 
 using namespace player;
 
+// Network shit
+
 // ToDo: a JSON messages transfer, perhaps?
 size_t read_complete(char* buff, const error_code& err, size_t bytes)
 {
@@ -97,6 +99,7 @@ double parseMessage(std::string& msg) {
     return res;
 }
 
+// End of network shit
 
 int main()
 {
@@ -388,6 +391,19 @@ int main()
 
             break;
         case SingleMode:
+
+            if (IsKeyPressed(KEY_ESCAPE)) {
+                p1 = Player(StdPlayerSize, RealCenter + Vector2{ (int)(XCellCount * 0.3 + 0.3) * cellWidth, (int)(-YCellCount * 0.3 + 0.3) * cellHeight }, StdPlayerVelocity, 1);
+                UltimateBulletVector.clear();
+                CurrentScreen = StartMenu;
+                break;
+            }
+
+            if (!p1.GetIsAlive()) {
+                p1 = Player(StdPlayerSize, RealCenter + Vector2{ (int)(XCellCount * 0.3 + 0.3) * cellWidth, (int)(-YCellCount * 0.3 + 0.3) * cellHeight }, StdPlayerVelocity, 1);
+                UltimateBulletVector.clear();
+            }
+
             // Player moving
             p1.MovePlayer(Map.getNeighbourhoodRect(p1.PlayerPosition));
 
@@ -399,6 +415,11 @@ int main()
                 std::cout << "check" << std::endl;
             }
             */
+            
+            // Collision player with bullets
+            for (int i = 0; i < UltimateBulletVector.size(); i++) {
+                p1.CollideBullet(UltimateBulletVector[i]);
+            }
 
             // Collsion with walls for bullets
             for (int i = 0; i < UltimateBulletVector.size(); i++) {
@@ -417,7 +438,7 @@ int main()
 			
 			// Player respawn (for debug purposes)
             if (IsKeyPressed(KEY_R)) {
-                p1 = Player(StdPlayerSize, RealCenter + Vector2{ (int)0.3 * cellWidth, (int)0.3 * cellHeight }, StdPlayerVelocity, 1);
+                p1 = Player(StdPlayerSize, RealCenter + Vector2{ (int)(XCellCount * 0.3 + 0.3) * cellWidth, (int)(-YCellCount * 0.3 + 0.3) * cellHeight }, StdPlayerVelocity, 1);
             }
 
 

@@ -7,6 +7,8 @@ Player::Player(Vector2 PS, Vector2 PP, Vector2 PV, int ID)
     PlayerSize = PS;
     PlayerPosition = PP;
     PlayerVelocity = PV;
+    PlayerColor = GRAY;
+    TurretColor = GRAY;
     PlayerID = ID;
     if (ID == 1) {
         PlayerColor = RED;
@@ -123,7 +125,6 @@ bool Player::CheckCollisionWall(Rectangle rect) {
         w_max = tw_max;
         if (pl_max < w_min || w_max < pl_min) IsColliding = false;
     }
-    if (IsColliding) std::cout << "COLLISION" << std::endl;
     PlayerRect = { PlayerPosition.x, PlayerPosition.y, PlayerSize.x, PlayerSize.y };
     UpdatePoints();
     return IsColliding;
@@ -164,6 +165,44 @@ bool Player::CollidePoint(const Vector2& point, const Vector2& shift)
     return false;
 }
 
+void Player::CollideBullet(Bullet& b)
+{
+    std::vector<Vector2> RealPlayerVertexes;
+
+    for (int i = 0; i < 4; i++) RealPlayerVertexes.push_back(GetRotatedVector(PlayerPosition, PlayerPoints[i], PlayerAngle));
+
+    std::vector<Vector2> AxisForProjections;
+    AxisForProjections.push_back(RealPlayerVertexes[0] - RealPlayerVertexes[1]);
+    AxisForProjections.push_back(RealPlayerVertexes[1] - RealPlayerVertexes[2]);
+
+    bool IsColliding = true;
+
+    for (Vector2 ax : AxisForProjections) {
+
+        std::vector<double> PlayerProjections;
+        for (int i = 0; i < 4; i++) {
+            PlayerProjections.push_back(GetProjection(RealPlayerVertexes[i], ax));
+        }
+        double BulletProjection = GetProjection(b.Position, ax);
+
+        double pl_min, pl_max, b_min, b_max;
+        double tpl_min, tpl_max;
+        tpl_min = tpl_max = PlayerProjections[0];
+        for (int i = 1; i < 4; i++) {
+            if (PlayerProjections[i] < tpl_min) tpl_min = PlayerProjections[i];
+            if (PlayerProjections[i] > tpl_max) tpl_max = PlayerProjections[i];
+        }
+        pl_min = tpl_min;
+        pl_max = tpl_max;
+        b_min = BulletProjection - b.Radius;
+        b_max = BulletProjection + b.Radius;
+        if (pl_max < b_min || b_max < pl_min) IsColliding = false;
+    }
+    if (IsColliding) {
+        IsAlive = false;
+    }
+}
+
 void Player::Shoot()
 {
     Shoot(IsKeyPressed(KEY_SPACE));
@@ -187,12 +226,17 @@ void Player::Shoot(bool isShooting)
         InBetweenReloadTimer -= 1;
     }
     if (InBetweenReloadTimer == 0 && AvailableShots != 0 && (isShooting)) {
-        UltimateBulletVector.push_back(Bullet{ PlayerPosition + PlayerVelocity * 10, PlayerVelocity * 2, StdBulletRadius });
+        UltimateBulletVector.push_back(Bullet{ PlayerPosition + PlayerVelocity * 10.1, PlayerVelocity * 2, StdBulletRadius });
         InBetweenReloadTimer = 4;
         AvailableShots -= 1;
         ReloadTime = StdReloadTime;
         PlaySound(soundBoard[SoundPlayerShoot]);
     }
+}
+
+bool Player::GetIsAlive()
+{
+    return IsAlive;
 }
 
 void Player::DrawPlayer()
