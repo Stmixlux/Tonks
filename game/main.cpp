@@ -36,10 +36,10 @@ io_service service;
 std::deque<Bullet> UltimateBulletVector;
 Sound soundBoard[100];
 
-typedef enum GameScreen { StartMenu = 0, Network, Game, Settings, Exit, TestRoom };
+typedef enum GameScreen { StartMenu = 0, Network, SingleMode, Settings, Exit, TestRoom };
 
 /* TODO:
-    Implement collision for tank (hard :( )
+    Implement collision for tank  --- IN PROGRESS
 */
 
 using namespace player;
@@ -130,6 +130,7 @@ int main()
     Switch CameraModeButton{ RealCenter + Vector2{-100, 0},  Vector2{100, 60}, "Fog of war mode", 40 };
 
     // Network menu
+    Button Single{ RealCenter - Vector2{0, 175},  Vector2{100, 60}, "Single", 30, GRAY };
     Button HostButton{ RealCenter - Vector2{0, 100},  Vector2{100, 60}, "Host", 30, GRAY };
     Button ConnectButton{ RealCenter - Vector2{0, 25},  Vector2{200, 60}, "Connect", 30, GRAY };
     InputTextWindow IP{ RealCenter + Vector2{0, 50},  Vector2{350, 60}, "IP and port: ", 30 };
@@ -196,8 +197,10 @@ int main()
             if (BackButton.IsPressed()) {
                 CurrentScreen = StartMenu;
             }
+            else if (Single.IsPressed()) {
+                CurrentScreen = SingleMode;
+            }
             else if (HostButton.IsPressed()) {
-
                 if (isHost) {
                     waitForConnectionAsServer(sock);
                     writeMessage(Map.toString(), sock);
@@ -210,7 +213,8 @@ int main()
                 // Start playing music
                 PlayMusicStream(music);
                 SetMusicVolume(music, 0.0);
-                CurrentScreen = Game;
+				CurrentScreen = SingleMode;
+				
             }
             else if (ConnectButton.IsPressed()) {
                 isHost = false;
@@ -231,6 +235,7 @@ int main()
 
             BeginDrawing();
             ClearBackground(RAYWHITE);
+            Single.DrawButton();
             HostButton.DrawButton();
             ConnectButton.DrawButton();
             BackButton.DrawButton();
@@ -255,8 +260,8 @@ int main()
             EndDrawing();
             break;
 
-            // Actual game window
-        case Game:
+        // Actual game window
+        case SingleMode:
             readMessage(sock, message, isMessageNew);
 
             // Syncronaizing area
@@ -331,12 +336,54 @@ int main()
                 writeMessage(toSend, sock);
             }
 
+            else { // If Client
+
+                // handle incoming message
+                if (isMessageNew) {
+                    isMessageNew = false;
+                    if (!got_map) {
+                        Map.setMapFromString(message);
+                        got_map = true;
+                    }
+                    else {
+                        // let's recollect all data:
+                        std::cout << "Angle: " << parseMessage(message) << "\n";
+                        std::cout << "Player position (x, y): (" << parseMessage(message) << ", " << parseMessage(message) << ")\n";
+                        int numberOfBullets = parseMessage(message);
+                        for (int i = 0; i < numberOfBullets; i++) {
+                            std::cout << "Bullet position (x, y): (" << parseMessage(message) << ", " << parseMessage(message) << ")\n";
+                        }
+                    }
+                }
+
+                // send inputs
+                toSend = "";
+                if (IsKeyDown(KEY_UP)) {
+                    toSend += "w";
+                }
+                if (IsKeyDown(KEY_DOWN)) {
+                    toSend += "s";
+                }
+                if (IsKeyDown(KEY_RIGHT)) {
+                    toSend += "d";
+                }
+                if (IsKeyDown(KEY_LEFT)) {
+                    toSend += "a";
+                }
+                if (IsKeyDown(KEY_SPACE)) {
+                    toSend += "f";
+                }
+                writeMessage(toSend, sock);
+            }
+
             // Player moving
             p1.MovePlayer();
 
             // Collision with walls for player
             for (Rectangle wall : Map.getNeighbourhoodRect(p1.PlayerPosition)) {
+                if(p1.CheckCollisionWall(wall)) std::cout << "COLLISION" << std::endl;
                 p1.CollideWall(wall);
+                std::cout << "check" << std::endl;
             }
 
 
@@ -354,6 +401,11 @@ int main()
 
             // Shooting
             p1.Shoot();
+			
+			// Player respawn (for debug purposes)
+            if (IsKeyPressed(KEY_R)) {
+                p1 = Player(StdPlayerSize, RealCenter + Vector2{ (int)0.3 * cellWidth, (int)0.3 * cellHeight }, StdPlayerVelocity);
+            }
 
 
             // Here begins drawing
