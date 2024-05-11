@@ -97,10 +97,10 @@ void loadAllSounds()
 	soundBoard[SoundPLayerDeath] = LoadSound("resources/death.mp3");
 }
 
-void SetSoundsVolume(bool isOn)
+void setAllSoundsVolume(int isOn)
 {
 	for (int i = 0; i < std::size(soundBoard); i++) {
-		SetSoundVolume(soundBoard[i], isOn);
+		SetSoundVolume(soundBoard[i], isOn * 0.9);
 	}
 }
 

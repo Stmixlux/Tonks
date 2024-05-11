@@ -153,7 +153,7 @@ int main()
 
     // Sound managing flags
     bool IsMusicOn = true;
-    bool IsEffectsOn = true;
+    int IsEffectsOn = 1;
 
     // Stuff for networks
     ip::tcp::endpoint ep(ip::address::from_string("127.0.0.1"), 38001); // "192.168.1.8"
@@ -293,10 +293,9 @@ int main()
             
 
             EffectsSwitch.UpdateSwitch();
-            IsEffectsOn = MusicSwitch.GetState();
-            if (EffectsSwitch.IsPressed()) {
-                SetSoundsVolume(IsEffectsOn);
-            }
+            IsEffectsOn = EffectsSwitch.GetState();
+            if(EffectsSwitch.IsPressed()) setAllSoundsVolume(IsEffectsOn);
+            
 
             BeginDrawing();
             ClearBackground(RAYWHITE);

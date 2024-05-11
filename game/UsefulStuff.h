@@ -56,7 +56,7 @@ void DrawPlayerClient(double x, double y, double angle, int ID);
 enum SoundsId {SoundPlayerShoot, SoundBulletBurst, SoundButtonClick, SoundPLayerDeath};
 extern Sound soundBoard[100];
 void loadAllSounds();
-void SetSoundsVolume(bool);
+void setAllSoundsVolume(int);
 void unloadAllSounds();
 
 const double visionRadius = 1.5 * GetLen(Vector2{ cellWidth, cellHeight });
