@@ -36,11 +36,8 @@ io_service service;
 std::deque<Bullet> UltimateBulletVector;
 Sound soundBoard[100];
 
-typedef enum GameScreen { StartMenu = 0, Network, HostLobby, SingleMode, HostMode, ClientMode, Settings, Exit, TestRoom, DeathScreen };
+typedef enum GameScreen { StartMenu = 0, Network, SingleMode, HostMode, ClientMode, Settings, Exit, DeathScreen };
 
-/* TODO:
-    Implement collision for tank  --- IN PROGRESS
-*/
 
 using namespace player;
 
@@ -132,6 +129,10 @@ int main()
 
     // Settings menu
     Button BackButton{ RealCenter + Vector2{0, 150},  Vector2{100, 60}, "Back", 30, GRAY };
+    Switch MusicSwitch{ RealCenter + Vector2{-100, -140},  Vector2{100, 60}, "Sound of music", 40 };
+    MusicSwitch.ChangeState();
+    Switch EffectsSwitch{ RealCenter + Vector2{-100, -70},  Vector2{100, 60}, "Sound of effects", 40 };
+    EffectsSwitch.ChangeState();
     Switch CameraModeButton{ RealCenter + Vector2{-100, 0},  Vector2{100, 60}, "Fog of war mode", 40 };
 
     // Network menu
@@ -149,6 +150,10 @@ int main()
     int CameraMode = 0;
     bool Inputs[4];
     int whoWon = 0;
+
+    // Sound managing flags
+    bool IsMusicOn = true;
+    bool IsEffectsOn = true;
 
     // Stuff for networks
     ip::tcp::endpoint ep(ip::address::from_string("127.0.0.1"), 38001); // "192.168.1.8"
@@ -193,10 +198,6 @@ int main()
                 CurrentScreen = Settings;
             }
 
-            else if (IsKeyDown(KEY_T)) {
-                CurrentScreen = TestRoom;
-            }
-
             BeginDrawing();
             ClearBackground(RAYWHITE);
             DrawText("Tonks the Game", RealCenter.x - MeasureText("Tonks the Game", 50) / 2, RealCenter.y - 50 / 2 - 200, 50, BLACK);
@@ -221,7 +222,9 @@ int main()
                 FailedToConnect = false;
                 CurrentScreen = SingleMode;
                 PlayMusicStream(music);
-                SetMusicVolume(music, 0.1);
+
+                SetMusicVolume(music, 0.3*IsMusicOn);
+
             }
             else if (HostButton.IsPressed()) {
 
@@ -233,7 +236,8 @@ int main()
 
                 // Start playing music
                 PlayMusicStream(music);
-                SetMusicVolume(music, 0.1);
+
+                SetMusicVolume(music, 0.3*IsMusicOn);
                 CurrentScreen = HostMode;
 
             }
@@ -248,7 +252,8 @@ int main()
 
                 if (isConnected) {
                     PlayMusicStream(music);
-                    SetMusicVolume(music, 0.1);
+
+                    SetMusicVolume(music, 0.3*IsMusicOn);
                     CurrentScreen = ClientMode;
                 }
                 else {
@@ -283,10 +288,22 @@ int main()
             CameraModeButton.UpdateSwitch();
             CameraMode = CameraModeButton.GetState();
 
+            MusicSwitch.UpdateSwitch();
+            IsMusicOn = MusicSwitch.GetState();
+            
+
+            EffectsSwitch.UpdateSwitch();
+            IsEffectsOn = MusicSwitch.GetState();
+            if (EffectsSwitch.IsPressed()) {
+                SetSoundsVolume(IsEffectsOn);
+            }
+
             BeginDrawing();
             ClearBackground(RAYWHITE);
             DrawText("Settings", RealCenter.x - MeasureText("Settings", 50) / 2, RealCenter.y - 50 / 2 - 200, 50, BLACK);
             CameraModeButton.DrawSwitch();
+            MusicSwitch.DrawSwitch();
+            EffectsSwitch.DrawSwitch();
             BackButton.DrawButton();
 
             EndDrawing();
@@ -526,14 +543,6 @@ int main()
                 UltimateBulletVector[i].MoveBullet();
             }
 
-            // Collision with walls for player (old)
-            /*
-            for (Rectangle wall : Map.getNeighbourhoodRect(p1.PlayerPosition)) {
-                if(p1.CheckCollisionWall(wall)) std::cout << "COLLISION" << std::endl;
-                p1.CollideWall(wall);
-                std::cout << "check" << std::endl;
-            }
-            */
 
             // Collision player with bullets
             for (int i = 0; i < UltimateBulletVector.size(); i++) {
@@ -546,7 +555,6 @@ int main()
                     UltimateBulletVector[i].Collide(rect);
                 }
             }
-
 
 
             // Player respawn (for debug purposes)
@@ -563,6 +571,7 @@ int main()
             if (CameraMode == 0) {
                 Map.Draw();
             }
+            // Map drawing fog of war mode
             else if (CameraMode == 1) {
                 for (Rectangle r : Map.getNeighbourhoodRect(p1.PlayerPosition)) {
                     DrawRectangleRec(r, BLACK);
@@ -570,7 +579,6 @@ int main()
             }
 
             p1.DrawPlayer();
-            //DrawPlayerClient(p1.PlayerPosition.x, p1.PlayerPosition.y, p1.PlayerAngle, 1);
 
             // Map regenerator
             if (IsKeyDown(KEY_G)) {
@@ -644,6 +652,7 @@ int main()
                 RematchButton.UpdateSwitch();
                 weReady = RematchButton.GetState();
             }
+            
 
             if (weReady && otherReady) {
                 if (isHost) {
@@ -676,7 +685,9 @@ int main()
                 DrawText("BLUE", RealCenter.x - MeasureText("BLUE", 70) / 2, RealCenter.y - 70 / 2, 70, BLUE);
             }
             DrawText("WON", RealCenter.x - MeasureText("WON", 70) / 2, RealCenter.y - 70 / 2 + 100, 70, BLACK);
-
+            if (weReady) {
+                DrawText("Waiting for another player", RealCenter.x - MeasureText("GAME OVER", 16) / 2 - 310, RealCenter.y - 16 / 2 + 205, 16, BLACK);
+            }
             RematchButton.DrawSwitch();
             MenuButton.DrawButton();
             EndDrawing();
@@ -686,20 +697,6 @@ int main()
         case Exit:
             ExitFlag = true;
             break;
-
-
-        case TestRoom:
-            CurrentScreen = Settings;
-            break;
-            // For now using CameraMode to diffirintiate server/client
-            /*
-            if (CameraMode) {
-                handle_connections(syncMessages);
-            }
-            else {
-                std::cout << "May start";
-                sync_echo("Staying Alive");
-            }*/
             }
         }
 

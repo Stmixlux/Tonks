@@ -4,7 +4,7 @@ void Tile::Draw()
 {
 	float cellWidth = screenWidth / XCellCount;
 	float cellHeight = screenHeight / YCellCount;
-	float lineWidth = (screenHeight / XCellCount + screenWidth / YCellCount) / 20;
+	float lineWidth = (screenHeight / XCellCount + screenWidth / YCellCount) / 20 + 1;
 
 	if (sidesStates[0]) {
 		DrawRectangle(float(x) * cellWidth - lineWidth / 2, float(y - 0.5) * cellHeight, lineWidth, cellHeight / 2 + lineWidth / 2, BLACK);
