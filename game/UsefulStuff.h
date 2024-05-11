@@ -23,6 +23,7 @@ const std::vector<Rectangle> outerWalls{ Rectangle{-10, -1, 15, screenHeight + 2
 
 const int FPS = 60;
 
+
 // Standart player parameters
 const Vector2 StdPlayerSize = { 30, 50 };
 const Vector2 StdPlayerVelocity = { 0.0f, -4.0f };
@@ -57,3 +58,4 @@ extern Sound soundBoard[100];
 void loadAllSounds();
 void unloadAllSounds();
 
+const double visionRadius = 1.5 * GetLen(Vector2{ cellWidth, cellHeight });

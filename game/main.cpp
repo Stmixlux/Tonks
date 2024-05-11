@@ -285,7 +285,7 @@ int main()
 
             BeginDrawing();
             ClearBackground(RAYWHITE);
-            DrawText("Placeholder page for settings", RealCenter.x - MeasureText("Placeholder page for settings", 30) / 2, RealCenter.y - 30 / 2 - 200, 30, BLACK);
+            DrawText("Settings", RealCenter.x - MeasureText("Settings", 50) / 2, RealCenter.y - 50 / 2 - 200, 50, BLACK);
             CameraModeButton.DrawSwitch();
             BackButton.DrawButton();
 
@@ -366,16 +366,31 @@ int main()
             ClearBackground(RAYWHITE);
 
 
-            Map.Draw();
+            // Regular mode
+            if (CameraMode == 0) {
+                p2.DrawPlayer();
+                Map.Draw();
+                for (Vector2& shot : bullets) {
+                    DrawCircleV(shot, StdBulletRadius, BLACK);
+                }
+            }
+
+            // fog of war mode
+            else if (CameraMode == 1) {
+                for (Rectangle r : Map.getNeighbourhoodRect(p1.PlayerPosition)) {
+                    DrawRectangleRec(r, BLACK);
+                }
+                if (GetDistance(p1.PlayerPosition, p2.PlayerPosition) < visionRadius) {
+                    p2.DrawPlayer();
+                }
+                for (int i = 0; i < UltimateBulletVector.size(); i++) {
+                    if (GetDistance(p1.PlayerPosition, UltimateBulletVector[i].Position) < visionRadius) {
+                        UltimateBulletVector[i].DrawBullet();
+                    }
+                }
+            }
 
             p1.DrawPlayer();
-            p2.DrawPlayer();
-
-
-            // Bullet drawer
-            for (int i = 0; i < UltimateBulletVector.size(); i++) {
-                UltimateBulletVector[i].DrawBullet();
-            }
             EndDrawing();
 
 
@@ -432,14 +447,36 @@ int main()
             }
             BeginDrawing();
             ClearBackground(RAYWHITE);
-            Map.Draw();
 
-            DrawPlayerClient(x1, y1, angle1, 1);
+            // regular mode
+            if (CameraMode == 0) {
+
+                DrawPlayerClient(x1, y1, angle1, 1);
+                Map.Draw();
+                for (Vector2& shot : bullets) {
+                    DrawCircleV(shot, StdBulletRadius, BLACK);
+                }
+            }
+
+            // fog of war mode
+            else if (CameraMode == 1) {
+                for (Rectangle r : Map.getNeighbourhoodRect(Vector2{ (float)x2, (float)y2 })) {
+                    DrawRectangleRec(r, BLACK);
+                }
+                if (GetLen(Vector2{ (float)(x2 - x1), (float)(y2 - y1) }) < visionRadius) {
+                    DrawPlayerClient(x1, y1, angle1, 1);
+                }
+                for (Vector2& shot : bullets) {
+                    if (GetLen(Vector2{ (float)(x2 - shot.x), (float)(y2 - shot.y) }) < visionRadius) {
+                        DrawCircleV(shot, StdBulletRadius, BLACK);
+                    }
+                }
+            }
+
+
             DrawPlayerClient(x2, y2, angle2, 2);
 
-            for (Vector2& shot : bullets) {
-                DrawCircleV(shot, StdBulletRadius, BLACK);
-            }
+
             EndDrawing();
 
             // send inputs
@@ -522,17 +559,14 @@ int main()
             BeginDrawing();
             ClearBackground(RAYWHITE);
 
-            // Map drawing Standard mode
+            // Map drawing
             if (CameraMode == 0) {
                 Map.Draw();
             }
             else if (CameraMode == 1) {
-
                 for (Rectangle r : Map.getNeighbourhoodRect(p1.PlayerPosition)) {
                     DrawRectangleRec(r, BLACK);
                 }
-
-                Map.Draw();
             }
 
             p1.DrawPlayer();
