@@ -52,7 +52,7 @@ void DrawPlayerClient(double x, double y, double angle, int ID);
 
 
 // Global resource Managment
-enum SoundsId {SoundPlayerShoot, SoundBulletBurst, SoundButtonClick};
+enum SoundsId {SoundPlayerShoot, SoundBulletBurst, SoundButtonClick, SoundPLayerDeath};
 extern Sound soundBoard[100];
 void loadAllSounds();
 void unloadAllSounds();

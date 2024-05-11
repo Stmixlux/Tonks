@@ -165,7 +165,7 @@ int main()
 
     // For client drawing
     double x1 = 0, y1 = 0, angle1 = 0, x2 = 0, y2 = 0, angle2 = 0;
-    int numberOfBullets = 0; // deeply important
+    int numberOfBullets = 0, oldNumberOfBullets = 0; // deeply important
     int sense = 0;
     std::vector<Vector2> bullets;
 
@@ -224,6 +224,7 @@ int main()
                 isHost = true;
                 waitForConnectionAsServer(sock);
                 isConnected = true;
+                Map.regenerateMap();
                 writeMessage("0;" + Map.toString(), sock);
 
                 // Start playing music
@@ -325,6 +326,7 @@ int main()
                 UltimateBulletVector.clear();
 
                 CurrentScreen = DeathScreen;
+                PlaySound(soundBoard[SoundPLayerDeath]);
 
                 toSend = "2;";
                 toSend += boost::lexical_cast<std::string>(whoWon) + ";";
@@ -344,41 +346,39 @@ int main()
             }
 
 
-                // Collsion with walls for bullets
-                for (int i = 0; i < UltimateBulletVector.size(); i++) {
-                    for (Rectangle rect : Map.getNeighbourhoodRect(UltimateBulletVector[i].Position)) {
-                        UltimateBulletVector[i].Collide(rect);
-                    }
+            // Collsion with walls for bullets
+            for (int i = 0; i < UltimateBulletVector.size(); i++) {
+                for (Rectangle rect : Map.getNeighbourhoodRect(UltimateBulletVector[i].Position)) {
+                    UltimateBulletVector[i].Collide(rect);
                 }
-            
+            }
+
+            // Here begins drawing
+            BeginDrawing();
+            ClearBackground(RAYWHITE);
 
 
-                // Here begins drawing
-                BeginDrawing();
-                ClearBackground(RAYWHITE);
+            Map.Draw();
+
+            p1.DrawPlayer();
+            p2.DrawPlayer();
 
 
-                Map.Draw();
-
-                p1.DrawPlayer();
-                p2.DrawPlayer();
-
-
-                // Bullet drawer
-                for (int i = 0; i < UltimateBulletVector.size(); i++) {
-                    UltimateBulletVector[i].DrawBullet();
-                }
-                EndDrawing();
+            // Bullet drawer
+            for (int i = 0; i < UltimateBulletVector.size(); i++) {
+                UltimateBulletVector[i].DrawBullet();
+            }
+            EndDrawing();
 
 
-                // Send the whole state_of_the_game to client
-                toSend = "1;";
-                toSend += p1.toString();
-                toSend += p2.toString();
-                toSend += boost::lexical_cast<std::string>(UltimateBulletVector.size()) + ";";
-                for (Bullet& b : UltimateBulletVector) toSend += b.toString();
-                writeMessage(toSend, sock);
-                break;
+            // Send the whole state_of_the_game to client
+            toSend = "1;";
+            toSend += p1.toString();
+            toSend += p2.toString();
+            toSend += boost::lexical_cast<std::string>(UltimateBulletVector.size()) + ";";
+            for (Bullet& b : UltimateBulletVector) toSend += b.toString();
+            writeMessage(toSend, sock);
+            break;
 
         case ClientMode:
 
@@ -400,14 +400,23 @@ int main()
                     y2 = parseMessage(message);
                     angle2 = parseMessage(message);
 
-
+                    oldNumberOfBullets = numberOfBullets;
                     numberOfBullets = parseMessage(message);
+                    if (oldNumberOfBullets > numberOfBullets) {
+                        PlaySound(soundBoard[SoundBulletBurst]);
+                    }
+                    else if (oldNumberOfBullets < numberOfBullets) {
+                        PlaySound(soundBoard[SoundPlayerShoot]);
+                    }
+
                     bullets.clear();
                     for (int i = 0; i < numberOfBullets; i++) {
                         bullets.push_back(Vector2{ (float)parseMessage(message) , (float)parseMessage(message) });
                     }
                     break;
+
                 case 2: // Someone died
+                    PlaySound(soundBoard[SoundPLayerDeath]);
                     whoWon = parseMessage(message);
                     CurrentScreen = DeathScreen;
                     break;
@@ -457,6 +466,7 @@ int main()
             if (!p1.GetIsAlive()) {
                 p1 = Player(StdPlayerSize, RealCenter + Vector2{ (int)(XCellCount * 0.3 + 0.3) * cellWidth, (int)(-YCellCount * 0.3 + 0.3) * cellHeight }, StdPlayerVelocity, 1);
                 UltimateBulletVector.clear();
+                PlaySound(soundBoard[SoundPLayerDeath]);
             }
 
             // Player moving
@@ -548,10 +558,23 @@ int main()
 
             // Handle interface
             if (MenuButton.IsPressed()) {
+                // end connection
                 toSend = "3;b";
                 writeMessage(toSend, sock);
                 CurrentScreen = StartMenu;
                 sock.close();
+
+                // reverting all flags
+                isConnected = false;
+                isHost = false;
+                whoWon = 0;
+                gotMap = false;
+                numberOfBullets = 0;
+                oldNumberOfBullets = 0;
+                weReady = false;
+                otherReady = false;
+                if(RematchButton.GetState()) RematchButton.ChangeState();
+
                 break;
             }
             if (RematchButton.IsPressed()) {
@@ -570,8 +593,14 @@ int main()
                     writeMessage("0;" + Map.toString(), sock);
                 }
                 CurrentScreen = isHost ? HostMode : ClientMode;
+
+                // revert some flags
                 weReady = false;
                 otherReady = false;
+                whoWon = 0;
+                gotMap = false;
+                numberOfBullets = 0;
+                oldNumberOfBullets = 0;
                 RematchButton.ChangeState();
 
                 break;
@@ -616,12 +645,12 @@ int main()
             }
         }
 
-        UnloadMusicStream(music);   // Unload music stream buffers from RAM
+    UnloadMusicStream(music);   // Unload music stream buffers from RAM
 
-        unloadAllSounds();
+    unloadAllSounds();
 
-        CloseAudioDevice();
+    CloseAudioDevice();
 
-        CloseWindow();
+    CloseWindow();
 
-    }
+}

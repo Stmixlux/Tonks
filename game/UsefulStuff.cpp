@@ -91,9 +91,10 @@ void DrawPlayerClient(double x, double y, double angle, int ID)
 
 void loadAllSounds()
 {
-	soundBoard[SoundBulletBurst] = LoadSound("resources/burst.mp3");
+	soundBoard[SoundBulletBurst] = LoadSound("resources/burst.wav");
 	soundBoard[SoundPlayerShoot] = LoadSound("resources/shot.mp3");
 	soundBoard[SoundButtonClick] = LoadSound("resources/buttonClick.wav");
+	soundBoard[SoundPLayerDeath] = LoadSound("resources/death.mp3");
 }
 
 void unloadAllSounds()
