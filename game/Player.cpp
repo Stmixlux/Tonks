@@ -179,35 +179,6 @@ void Player::CollideWall(Rectangle rect)
                 counter += 1;
 
             }
-            /*
-            while (CheckCollisionWall(rect) && counter < 10) {
-                PlayerPosition -= PlayerVelocity * MovingDirection * (float)0.1;
-                counter += 1;
-                PlayerRect = { PlayerPosition.x, PlayerPosition.y, PlayerSize.x, PlayerSize.y };
-                UpdatePoints();
-            }
-            */
-            /*
-            while (CheckCollisionWall(rect) && counter < 10) {
-                PlayerPosition.x -= PlayerVelocity.x * MovingDirection * (float)0.1;
-                counter += 1;
-                PlayerRect = { PlayerPosition.x, PlayerPosition.y, PlayerSize.x, PlayerSize.y };
-                UpdatePoints();
-            }
-            if (counter == 10) {
-                PlayerPosition.x += PlayerVelocity.x * MovingDirection * 0.9;
-                PlayerRect = { PlayerPosition.x, PlayerPosition.y, PlayerSize.x, PlayerSize.y };
-                UpdatePoints();
-            }
-            counter = 0;
-            while (CheckCollisionWall(rect) && counter < 10) {
-                PlayerPosition.y -= PlayerVelocity.y * MovingDirection * (float)0.1;
-                counter += 1;
-                PlayerRect = { PlayerPosition.x, PlayerPosition.y, PlayerSize.x, PlayerSize.y };
-                UpdatePoints();
-            }
-
-            */
         }
     }
     PlayerRect = { PlayerPosition.x, PlayerPosition.y, PlayerSize.x, PlayerSize.y };

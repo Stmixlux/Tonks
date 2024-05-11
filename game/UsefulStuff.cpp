@@ -96,6 +96,15 @@ void loadAllSounds()
 	soundBoard[SoundButtonClick] = LoadSound("resources/buttonClick.wav");
 }
 
+void SetSoundsVolume(bool isOn)
+{
+	for (int i = 0; i < std::size(soundBoard); i++) {
+		SetSoundVolume(soundBoard[i], isOn);
+	}
+}
+
+
+
 void unloadAllSounds()
 {
 	for (int i = 0; i < std::size(soundBoard); i++) {

@@ -55,5 +55,6 @@ void DrawPlayerClient(double x, double y, double angle, int ID);
 enum SoundsId {SoundPlayerShoot, SoundBulletBurst, SoundButtonClick};
 extern Sound soundBoard[100];
 void loadAllSounds();
+void SetSoundsVolume(bool);
 void unloadAllSounds();
 
