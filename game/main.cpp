@@ -217,7 +217,7 @@ int main()
             else if (Single.IsPressed()) {
                 CurrentScreen = SingleMode;
                 PlayMusicStream(music);
-                SetMusicVolume(music, 0.0);
+                SetMusicVolume(music, 0.3);
             }
             else if (HostButton.IsPressed()) {
 
@@ -229,7 +229,7 @@ int main()
 
                 // Start playing music
                 PlayMusicStream(music);
-                SetMusicVolume(music, 0.0);
+                SetMusicVolume(music, 0.3);
                 CurrentScreen = HostMode;
 
             }
@@ -244,7 +244,7 @@ int main()
 
                 if (isConnected) {
                     PlayMusicStream(music);
-                    SetMusicVolume(music, 0.0);
+                    SetMusicVolume(music, 0.3);
                     CurrentScreen = ClientMode;
                 }
                 else {
