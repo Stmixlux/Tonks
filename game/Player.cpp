@@ -44,16 +44,6 @@ void Player::MovePlayer(bool inputs[4], std::vector<Rectangle>& walls)
     IsRotating = false;
     RotationDirection = 1;
     MovingDirection = 1;
-    if (inputs[0]) {
-        PlayerPosition += PlayerVelocity;
-        IsMovingStraight = true;
-    }
-    if (inputs[1]) {
-        MovingDirection = -1;
-        PlayerPosition -= PlayerVelocity;
-        RotationDirection = -1;
-        IsMovingStraight = true;
-    }
     if (inputs[2]) {
         PlayerAngle += RotationSpeed * RotationDirection;
         RotateVector2(Vector2{}, PlayerVelocity, RotationSpeed * RotationDirection);
@@ -64,6 +54,23 @@ void Player::MovePlayer(bool inputs[4], std::vector<Rectangle>& walls)
         PlayerAngle += RotationSpeed * RotationDirection;
         RotateVector2(Vector2{}, PlayerVelocity, RotationSpeed * RotationDirection);
         IsRotating = true;
+    }
+    if (IsRotating) {
+        for (Rectangle wall : walls) {
+            CollideWall(wall);
+        }
+    }
+    IsRotating = false;
+
+    if (inputs[0]) {
+        PlayerPosition += PlayerVelocity;
+        IsMovingStraight = true;
+    }
+    if (inputs[1]) {
+        MovingDirection = -1;
+        PlayerPosition -= PlayerVelocity;
+        RotationDirection = -1;
+        IsMovingStraight = true;
     }
     PlayerRect = { PlayerPosition.x, PlayerPosition.y, PlayerSize.x, PlayerSize.y };
     UpdatePoints();
@@ -143,10 +150,64 @@ void Player::CollideWall(Rectangle rect)
         }
         counter = 0;
         if (IsMovingStraight) {
+            PlayerPosition -= PlayerVelocity * MovingDirection;
+            PlayerRect = { PlayerPosition.x, PlayerPosition.y, PlayerSize.x, PlayerSize.y };
+            UpdatePoints();
+
+            PlayerPosition.x += PlayerVelocity.x * MovingDirection;
+            if (!CheckCollisionWall(rect)) {
+                PlayerPosition.x += PlayerVelocity.x * MovingDirection * (float)0.01;
+            }
+            while (CheckCollisionWall(rect) && counter < 10) {
+                PlayerPosition.x -= PlayerVelocity.x * MovingDirection * (float)0.1;
+                counter += 1;
+            }
+
+            counter = 0;
+            PlayerPosition.y += PlayerVelocity.y * MovingDirection;
+            if (!CheckCollisionWall(rect)) {
+                PlayerPosition.y += PlayerVelocity.y * MovingDirection * (float)0.01;
+            }
+            while (CheckCollisionWall(rect) && counter < 10) {
+                PlayerPosition.y -= PlayerVelocity.y * MovingDirection * (float)0.1;
+                counter += 1;
+
+            }
+            counter = 0;
             while (CheckCollisionWall(rect) && counter < 10) {
                 PlayerPosition -= PlayerVelocity * MovingDirection * (float)0.1;
                 counter += 1;
+
             }
+            /*
+            while (CheckCollisionWall(rect) && counter < 10) {
+                PlayerPosition -= PlayerVelocity * MovingDirection * (float)0.1;
+                counter += 1;
+                PlayerRect = { PlayerPosition.x, PlayerPosition.y, PlayerSize.x, PlayerSize.y };
+                UpdatePoints();
+            }
+            */
+            /*
+            while (CheckCollisionWall(rect) && counter < 10) {
+                PlayerPosition.x -= PlayerVelocity.x * MovingDirection * (float)0.1;
+                counter += 1;
+                PlayerRect = { PlayerPosition.x, PlayerPosition.y, PlayerSize.x, PlayerSize.y };
+                UpdatePoints();
+            }
+            if (counter == 10) {
+                PlayerPosition.x += PlayerVelocity.x * MovingDirection * 0.9;
+                PlayerRect = { PlayerPosition.x, PlayerPosition.y, PlayerSize.x, PlayerSize.y };
+                UpdatePoints();
+            }
+            counter = 0;
+            while (CheckCollisionWall(rect) && counter < 10) {
+                PlayerPosition.y -= PlayerVelocity.y * MovingDirection * (float)0.1;
+                counter += 1;
+                PlayerRect = { PlayerPosition.x, PlayerPosition.y, PlayerSize.x, PlayerSize.y };
+                UpdatePoints();
+            }
+
+            */
         }
     }
     PlayerRect = { PlayerPosition.x, PlayerPosition.y, PlayerSize.x, PlayerSize.y };

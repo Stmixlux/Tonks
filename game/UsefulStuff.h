@@ -11,15 +11,15 @@
 #define DARKRED        CLITERAL(Color){ 153, 27, 37, 255 }     // Dark Red
 
 //Map parametrs
-const int XCellCount = 16;
-const int YCellCount = 8;
+const int XCellCount = 12;
+const int YCellCount = 6;
 
-const int screenWidth = 1280;
+const int screenWidth = 1440;
 const int screenHeight = 720;
 const int cellWidth = screenWidth / XCellCount;
 const int cellHeight = screenHeight / YCellCount;
-const std::vector<Rectangle> outerWalls{ Rectangle{-10, -1, 15, screenHeight + 2}, Rectangle{screenWidth - 5 - screenWidth / XCellCount, -1, 15, screenHeight + 2},
-		Rectangle{-1, -10, screenWidth + 2, 15}, Rectangle{-1, screenHeight - 5 - screenHeight / YCellCount, screenWidth + 2, 15} };
+const std::vector<Rectangle> outerWalls{ Rectangle{-7, -1, 15, screenHeight + 2}, Rectangle{screenWidth - 8 - screenWidth / XCellCount, -1, 15, screenHeight + 2},
+		Rectangle{-1, -7, screenWidth + 2, 15}, Rectangle{-1, screenHeight - 8 - screenHeight / YCellCount, screenWidth + 2, 15} };
 
 const int FPS = 60;
 
