@@ -141,7 +141,7 @@ int main()
     InputTextWindow IP{ RealCenter + Vector2{0, 50},  Vector2{350, 60}, "IP and port: ", 30 };
 
     // Death Screen Button
-    Switch RematchButton{ RealCenter + Vector2{-100, 180},  Vector2{100, 60}, "Rematch", 40};
+    Switch RematchButton{ RealCenter + Vector2{-100, 180},  Vector2{100, 60}, "Rematch", 40 };
     Button MenuButton{ RealCenter + Vector2{200, 180},  Vector2{200, 60}, "Menu", 30, GRAY };
 
     // Some flags
@@ -164,7 +164,7 @@ int main()
     bool isConnected = false;
 
     // For client drawing
-    double x1=0, y1=0, angle1=0, x2=0, y2=0, angle2=0;
+    double x1 = 0, y1 = 0, angle1 = 0, x2 = 0, y2 = 0, angle2 = 0;
     int numberOfBullets = 0; // deeply important
     int sense = 0;
     std::vector<Vector2> bullets;
@@ -225,12 +225,12 @@ int main()
                 waitForConnectionAsServer(sock);
                 isConnected = true;
                 writeMessage("0;" + Map.toString(), sock);
-                
+
                 // Start playing music
                 PlayMusicStream(music);
                 SetMusicVolume(music, 0.0);
-				CurrentScreen = HostMode;
-				
+                CurrentScreen = HostMode;
+
             }
             else if (ConnectButton.IsPressed()) {
 
@@ -283,7 +283,7 @@ int main()
             EndDrawing();
             break;
 
-        // Actual game window
+            // Actual game window
         case HostMode:
             readMessage(sock, message, isMessageNew);
 
@@ -332,51 +332,53 @@ int main()
                 break;
             }
 
+            // Moving for bullets
+            for (int i = 0; i < UltimateBulletVector.size(); i++) {
+                UltimateBulletVector[i].MoveBullet();
+            }
+
             // Collision player with bullets
             for (int i = 0; i < UltimateBulletVector.size(); i++) {
                 p1.CollideBullet(UltimateBulletVector[i]);
                 p2.CollideBullet(UltimateBulletVector[i]);
             }
 
-            // Collsion with walls for bullets
-            for (int i = 0; i < UltimateBulletVector.size(); i++) {
-                for (Rectangle rect : Map.getNeighbourhoodRect(UltimateBulletVector[i].Position)) {
-                    UltimateBulletVector[i].Collide(rect);
+
+                // Collsion with walls for bullets
+                for (int i = 0; i < UltimateBulletVector.size(); i++) {
+                    for (Rectangle rect : Map.getNeighbourhoodRect(UltimateBulletVector[i].Position)) {
+                        UltimateBulletVector[i].Collide(rect);
+                    }
                 }
-            }
-
-            // Moving for bullets
-            for (int i = 0; i < UltimateBulletVector.size(); i++) {
-                UltimateBulletVector[i].MoveBullet();
-            }
+            
 
 
-            // Here begins drawing
-            BeginDrawing();
-            ClearBackground(RAYWHITE);
+                // Here begins drawing
+                BeginDrawing();
+                ClearBackground(RAYWHITE);
 
 
-            Map.Draw();
+                Map.Draw();
 
-            p1.DrawPlayer();
-            p2.DrawPlayer();
-
-
-            // Bullet drawer
-            for (int i = 0; i < UltimateBulletVector.size(); i++) {
-                UltimateBulletVector[i].DrawBullet();
-            }
-            EndDrawing();
+                p1.DrawPlayer();
+                p2.DrawPlayer();
 
 
-            // Send the whole state_of_the_game to client
-            toSend = "1;";
-            toSend += p1.toString();
-            toSend += p2.toString();
-            toSend += boost::lexical_cast<std::string>(UltimateBulletVector.size()) + ";";
-            for (Bullet& b : UltimateBulletVector) toSend += b.toString();
-            writeMessage(toSend, sock);                
-            break;
+                // Bullet drawer
+                for (int i = 0; i < UltimateBulletVector.size(); i++) {
+                    UltimateBulletVector[i].DrawBullet();
+                }
+                EndDrawing();
+
+
+                // Send the whole state_of_the_game to client
+                toSend = "1;";
+                toSend += p1.toString();
+                toSend += p2.toString();
+                toSend += boost::lexical_cast<std::string>(UltimateBulletVector.size()) + ";";
+                for (Bullet& b : UltimateBulletVector) toSend += b.toString();
+                writeMessage(toSend, sock);
+                break;
 
         case ClientMode:
 
@@ -385,30 +387,30 @@ int main()
                 isMessageNew = false;
                 int sense = (int)parseMessage(message);
                 switch (sense) {
-                    case 0: // they send us new map
-                        Map.setMapFromString(message);
-                        break;
-                    case 1: // all positions
+                case 0: // they send us new map
+                    Map.setMapFromString(message);
+                    break;
+                case 1: // all positions
 
-                        // let's recollect all data:
-                        x1 = parseMessage(message);
-                        y1 = parseMessage(message);
-                        angle1 = parseMessage(message);
-                        x2 = parseMessage(message);
-                        y2 = parseMessage(message);
-                        angle2 = parseMessage(message);
+                    // let's recollect all data:
+                    x1 = parseMessage(message);
+                    y1 = parseMessage(message);
+                    angle1 = parseMessage(message);
+                    x2 = parseMessage(message);
+                    y2 = parseMessage(message);
+                    angle2 = parseMessage(message);
 
 
-                        numberOfBullets = parseMessage(message);
-                        bullets.clear();
-                        for (int i = 0; i < numberOfBullets; i++) {
-                            bullets.push_back(Vector2{ (float)parseMessage(message) , (float)parseMessage(message) });
-                        }
-                        break;
-                    case 2: // Someone died
-                        whoWon = parseMessage(message);
-                        CurrentScreen = DeathScreen;
-                        break;
+                    numberOfBullets = parseMessage(message);
+                    bullets.clear();
+                    for (int i = 0; i < numberOfBullets; i++) {
+                        bullets.push_back(Vector2{ (float)parseMessage(message) , (float)parseMessage(message) });
+                    }
+                    break;
+                case 2: // Someone died
+                    whoWon = parseMessage(message);
+                    CurrentScreen = DeathScreen;
+                    break;
                 }
             }
             BeginDrawing();
@@ -460,6 +462,14 @@ int main()
             // Player moving
             p1.MovePlayer(Map.getNeighbourhoodRect(p1.PlayerPosition));
 
+            // Shooting
+            p1.Shoot();
+
+            // Moving for bullets
+            for (int i = 0; i < UltimateBulletVector.size(); i++) {
+                UltimateBulletVector[i].MoveBullet();
+            }
+
             // Collision with walls for player (old)
             /*
             for (Rectangle wall : Map.getNeighbourhoodRect(p1.PlayerPosition)) {
@@ -468,7 +478,7 @@ int main()
                 std::cout << "check" << std::endl;
             }
             */
-            
+
             // Collision player with bullets
             for (int i = 0; i < UltimateBulletVector.size(); i++) {
                 p1.CollideBullet(UltimateBulletVector[i]);
@@ -481,15 +491,9 @@ int main()
                 }
             }
 
-            // Moving for bullets
-            for (int i = 0; i < UltimateBulletVector.size(); i++) {
-                UltimateBulletVector[i].MoveBullet();
-            }
 
-            // Shooting
-            p1.Shoot();
-			
-			// Player respawn (for debug purposes)
+
+            // Player respawn (for debug purposes)
             if (IsKeyPressed(KEY_R)) {
                 p1 = Player(StdPlayerSize, RealCenter + Vector2{ (int)(XCellCount * 0.3 + 0.3) * cellWidth, (int)(-YCellCount * 0.3 + 0.3) * cellHeight }, StdPlayerVelocity, 1);
             }
@@ -504,16 +508,16 @@ int main()
                 Map.Draw();
             }
             else if (CameraMode == 1) {
-                /*
+
                 for (Rectangle r : Map.getNeighbourhoodRect(p1.PlayerPosition)) {
                     DrawRectangleRec(r, BLACK);
                 }
-                */
+
                 Map.Draw();
             }
 
-            //p1.DrawPlayer();
-            DrawPlayerClient(p1.PlayerPosition.x, p1.PlayerPosition.y, p1.PlayerAngle, 1);
+            p1.DrawPlayer();
+            //DrawPlayerClient(p1.PlayerPosition.x, p1.PlayerPosition.y, p1.PlayerAngle, 1);
 
             // Map regenerator
             if (IsKeyDown(KEY_G)) {
@@ -581,7 +585,7 @@ int main()
             if (whoWon == 1) {
                 DrawText("RED", RealCenter.x - MeasureText("RED", 70) / 2, RealCenter.y - 70 / 2, 70, RED);
             }
-            else{
+            else {
                 DrawText("BLUE", RealCenter.x - MeasureText("BLUE", 70) / 2, RealCenter.y - 70 / 2, 70, BLUE);
             }
             DrawText("WON", RealCenter.x - MeasureText("WON", 70) / 2, RealCenter.y - 70 / 2 + 100, 70, BLACK);
@@ -591,7 +595,7 @@ int main()
             EndDrawing();
             break;
 
-        // Case for exit
+            // Case for exit
         case Exit:
             ExitFlag = true;
             break;
@@ -609,15 +613,15 @@ int main()
                 std::cout << "May start";
                 sync_echo("Staying Alive");
             }*/
+            }
         }
+
+        UnloadMusicStream(music);   // Unload music stream buffers from RAM
+
+        unloadAllSounds();
+
+        CloseAudioDevice();
+
+        CloseWindow();
+
     }
-
-    UnloadMusicStream(music);   // Unload music stream buffers from RAM
-
-    unloadAllSounds();
-
-    CloseAudioDevice();
-
-    CloseWindow();
-
-}

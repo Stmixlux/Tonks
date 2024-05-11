@@ -84,7 +84,7 @@ void DrawPlayerClient(double x, double y, double angle, int ID)
 	Rectangle rect{ x, y, StdPlayerSize.x, StdPlayerSize.y };
 
 	DrawRectanglePro(rect, Vector2{ (float)(StdPlayerSize.x / 2) , (float)(StdPlayerSize.y / 2) }, angle * 180 / PI, FirstColor);
-	DrawLineEx(Position, Position + (GetRotatedVector(Vector2{}, Vel, angle) * 10), 3, BLACK);
+	DrawLineEx(Position, Position + (GetRotatedVector(Vector2{}, Vel, angle) * 8), 3, BLACK);
 	DrawCircleV(Position, 10, SecondColor);
 
 }

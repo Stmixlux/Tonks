@@ -226,7 +226,7 @@ void Player::Shoot(bool isShooting)
         InBetweenReloadTimer -= 1;
     }
     if (InBetweenReloadTimer == 0 && AvailableShots != 0 && (isShooting)) {
-        UltimateBulletVector.push_back(Bullet{ PlayerPosition + PlayerVelocity * 10.1, PlayerVelocity * 2, StdBulletRadius });
+        UltimateBulletVector.push_back(Bullet{ PlayerPosition + PlayerVelocity * 7, PlayerVelocity * 2, StdBulletRadius });
         InBetweenReloadTimer = 4;
         AvailableShots -= 1;
         ReloadTime = StdReloadTime;
@@ -242,7 +242,7 @@ bool Player::GetIsAlive()
 void Player::DrawPlayer()
 {
     DrawRectanglePro(PlayerRect, Vector2{ (float)(PlayerSize.x / 2) , (float)(PlayerSize.y / 2) }, PlayerAngle * 180 / PI, PlayerColor);
-    DrawLineEx(PlayerPosition, PlayerPosition + (PlayerVelocity * 10), 3, BLACK);
+    DrawLineEx(PlayerPosition, PlayerPosition + (PlayerVelocity * 8), 3, BLACK);
     DrawCircleV(PlayerPosition, 10, TurretColor);
 }
 
