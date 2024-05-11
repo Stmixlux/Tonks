@@ -389,6 +389,10 @@ int main()
                 for (Vector2& shot : bullets) {
                     DrawCircleV(shot, StdBulletRadius, BLACK);
                 }
+                // Bullet drawer
+                for (int i = 0; i < UltimateBulletVector.size(); i++) {
+                    UltimateBulletVector[i].DrawBullet();
+                }
             }
 
             // fog of war mode
