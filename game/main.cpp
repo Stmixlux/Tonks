@@ -36,7 +36,7 @@ io_service service;
 std::deque<Bullet> UltimateBulletVector;
 Sound soundBoard[100];
 
-typedef enum GameScreen { StartMenu = 0, Network, SingleMode, HostMode, ClientMode, Settings, Exit, TestRoom, DeathScreen };
+typedef enum GameScreen { StartMenu = 0, Network, HostLobby, SingleMode, HostMode, ClientMode, Settings, Exit, TestRoom, DeathScreen };
 
 /* TODO:
     Implement collision for tank  --- IN PROGRESS
@@ -162,6 +162,7 @@ int main()
     int port;
     bool gotMap = false;
     bool isConnected = false;
+    bool FailedToConnect = false;
 
     // For client drawing
     double x1 = 0, y1 = 0, angle1 = 0, x2 = 0, y2 = 0, angle2 = 0;
@@ -199,6 +200,7 @@ int main()
             BeginDrawing();
             ClearBackground(RAYWHITE);
             DrawText("Tonks the Game", RealCenter.x - MeasureText("Tonks the Game", 50) / 2, RealCenter.y - 50 / 2 - 200, 50, BLACK);
+            DrawText("Mark I", RealCenter.x - MeasureText("Mark I", 20) / 2, RealCenter.y - 20 / 2 + 285, 20, BLACK);
             PlayButton.DrawButton();
             ExitButton.DrawButton();
             SettingsButton.DrawButton();
@@ -212,12 +214,14 @@ int main()
         case Network:
 
             if (BackButton.IsPressed()) {
+                FailedToConnect = false;
                 CurrentScreen = StartMenu;
             }
             else if (Single.IsPressed()) {
+                FailedToConnect = false;
                 CurrentScreen = SingleMode;
                 PlayMusicStream(music);
-                SetMusicVolume(music, 0.3);
+                SetMusicVolume(music, 0.1);
             }
             else if (HostButton.IsPressed()) {
 
@@ -229,7 +233,7 @@ int main()
 
                 // Start playing music
                 PlayMusicStream(music);
-                SetMusicVolume(music, 0.3);
+                SetMusicVolume(music, 0.1);
                 CurrentScreen = HostMode;
 
             }
@@ -244,12 +248,16 @@ int main()
 
                 if (isConnected) {
                     PlayMusicStream(music);
-                    SetMusicVolume(music, 0.3);
+                    SetMusicVolume(music, 0.1);
                     CurrentScreen = ClientMode;
                 }
                 else {
+                    FailedToConnect = true;
                     std::cout << "Timed out";
                 }
+            }
+            if (FailedToConnect) {
+                DrawText("Failed to connect to server", RealCenter.x - MeasureText("Failed to connect to server", 25) / 2, RealCenter.y - 25 / 2 + 230, 25, RED);
             }
             IP.UpdateState();
             IP.UpdateText();
@@ -460,6 +468,7 @@ int main()
                 p1 = Player(StdPlayerSize, RealCenter + Vector2{ (int)(XCellCount * 0.3 + 0.3) * cellWidth, (int)(-YCellCount * 0.3 + 0.3) * cellHeight }, StdPlayerVelocity, 1);
                 UltimateBulletVector.clear();
                 CurrentScreen = StartMenu;
+                StopMusicStream(music);
                 break;
             }
 
@@ -553,6 +562,19 @@ int main()
                 if (message.find("b") != message.npos) {
                     CurrentScreen = StartMenu;
                     sock.close();
+
+                    isConnected = false;
+                    FailedToConnect = false;
+                    isHost = false;
+                    whoWon = 0;
+                    gotMap = false;
+                    numberOfBullets = 0;
+                    oldNumberOfBullets = 0;
+                    weReady = false;
+                    otherReady = false;
+                    StopMusicStream(music);
+                    if (RematchButton.GetState()) RematchButton.ChangeState();
+                    break;
                 }
             }
 
@@ -566,6 +588,7 @@ int main()
 
                 // reverting all flags
                 isConnected = false;
+                FailedToConnect = false;
                 isHost = false;
                 whoWon = 0;
                 gotMap = false;
@@ -573,6 +596,7 @@ int main()
                 oldNumberOfBullets = 0;
                 weReady = false;
                 otherReady = false;
+                StopMusicStream(music);
                 if(RematchButton.GetState()) RematchButton.ChangeState();
 
                 break;
